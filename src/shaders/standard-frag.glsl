@@ -1,6 +1,7 @@
 #version 300 es
 precision highp float;
 
+in vec4 fs_WorldPos;
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_Col;
@@ -26,7 +27,7 @@ void main() {
     // if using textures, inverse gamma correct
     col = pow(col, vec3(2.2));
 
-    fragColor[0] = vec4(0.0);
-    fragColor[1] = vec4(0.0);
+    fragColor[0] = vec4(fs_Nor.xyz, fs_Pos.z);
+    fragColor[1] = fs_WorldPos;
     fragColor[2] = vec4(col, 1.0);
 }

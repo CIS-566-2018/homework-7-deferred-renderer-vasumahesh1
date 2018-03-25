@@ -1,4 +1,4 @@
-import {mat4, vec4, vec3} from 'gl-matrix';
+import {mat4, vec4, vec3, vec2} from 'gl-matrix';
 import Drawable from './Drawable';
 import Camera from '../../Camera';
 import {gl} from '../../globals';
@@ -66,10 +66,10 @@ class OpenGLRenderer {
     this.post32Passes = [];
 
     // TODO: these are placeholder post shaders, replace them with something good
-    this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/examplePost-frag.glsl'))));
-    this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/examplePost2-frag.glsl'))));
+    this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/present.glsl'))));
+    // this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/examplePost2-frag.glsl'))));
 
-    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/examplePost3-frag.glsl'))));
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF.glsl'))));
 
     if (!gl.getExtension("OES_texture_float_linear")) {
       console.error("OES_texture_float_linear not available");
@@ -96,7 +96,7 @@ class OpenGLRenderer {
 
 
   setSize(width: number, height: number) {
-    console.log(width, height);
+    // console.log(width, height);
     this.canvas.width = width;
     this.canvas.height = height;
 
@@ -259,86 +259,128 @@ class OpenGLRenderer {
   }
 
 
-  // TODO: pass any info you need as args
-  renderPostProcessHDR() {
-    // TODO: replace this with your post 32-bit pipeline
-    // the loop shows how to swap between frame buffers and textures given a list of processes,
-    // but specific shaders (e.g. bloom) need specific info as textures
-    let i = 0;
-    for (i = 0; i < this.post32Passes.length; i++){
-      // Pingpong framebuffers for each pass.
-      // In other words, repeatedly flip between storing the output of the
-      // current post-process pass in post32Buffers[1] and post32Buffers[0].
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[(i + 1) % 2]);
+  // // TODO: pass any info you need as args
+  // renderPostProcessHDR() {
+  //   // TODO: replace this with your post 32-bit pipeline
+  //   // the loop shows how to swap between frame buffers and textures given a list of processes,
+  //   // but specific shaders (e.g. bloom) need specific info as textures
+  //   let i = 0;
+  //   for (i = 0; i < this.post32Passes.length; i++){
+  //     // Pingpong framebuffers for each pass.
+  //     // In other words, repeatedly flip between storing the output of the
+  //     // current post-process pass in post32Buffers[1] and post32Buffers[0].
+  //     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[(i + 1) % 2]);
 
-      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-      gl.disable(gl.DEPTH_TEST);
-      gl.enable(gl.BLEND);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  //     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  //     gl.disable(gl.DEPTH_TEST);
+  //     gl.enable(gl.BLEND);
+  //     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      // Recall that each frame buffer is associated with a texture that stores
-      // the output of a render pass. post32Targets is the array that stores
-      // these textures, so we alternate reading from the 0th and 1th textures
-      // each frame (the texture we wrote to in our previous render pass).
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[(i) % 2]);
+  //     // Recall that each frame buffer is associated with a texture that stores
+  //     // the output of a render pass. post32Targets is the array that stores
+  //     // these textures, so we alternate reading from the 0th and 1th textures
+  //     // each frame (the texture we wrote to in our previous render pass).
+  //     gl.activeTexture(gl.TEXTURE0);
+  //     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[(i) % 2]);
 
-      this.post32Passes[i].draw();
+  //     this.post32Passes[i].draw();
 
-      // bind default frame buffer
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
+  //     // bind default frame buffer
+  //     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  //   }
 
-    // apply tonemapping
-    // TODO: if you significantly change your framework, ensure this doesn't cause bugs!
-    // render to the first 8 bit buffer if there is more post, else default buffer
-    if (this.post8Passes.length > 0) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.post8Buffers[0]);
-    }
-    else {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
+  //   // apply tonemapping
+  //   // TODO: if you significantly change your framework, ensure this doesn't cause bugs!
+  //   // render to the first 8 bit buffer if there is more post, else default buffer
+  //   if (this.post8Passes.length > 0) {
+  //     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post8Buffers[0]);
+  //   }
+  //   else {
+  //     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  //   }
 
+  //   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+  //   gl.disable(gl.DEPTH_TEST);
+  //   gl.enable(gl.BLEND);
+  //   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  //   gl.activeTexture(gl.TEXTURE0);
+  //   // bound texture is the last one processed before
+
+  //   gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[Math.max(0, i) % 2]);
+
+  //   this.tonemapPass.draw();
+
+  // }
+
+
+  // // TODO: pass any info you need as args
+  // renderPostProcessLDR() {
+  //   // TODO: replace this with your post 8-bit pipeline
+  //   // the loop shows how to swap between frame buffers and textures given a list of processes,
+  //   // but specific shaders (e.g. motion blur) need specific info as textures
+  //   for (let i = 0; i < this.post8Passes.length; i++){
+  //     // pingpong framebuffers for each pass
+  //     // if this is the last pass, default is bound
+  //     if (i < this.post8Passes.length - 1) gl.bindFramebuffer(gl.FRAMEBUFFER, this.post8Buffers[(i + 1) % 2]);
+  //     else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  //     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  //     gl.disable(gl.DEPTH_TEST);
+  //     gl.enable(gl.BLEND);
+  //     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  //     gl.activeTexture(gl.TEXTURE0);
+  //     gl.bindTexture(gl.TEXTURE_2D, this.post8Targets[(i) % 2]);
+
+  //     this.post8Passes[i].draw();
+
+  //     // bind default
+  //     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  //   }
+  // }
+
+  renderPass_DOF(camera: Camera, params: any) {
+    let activePass = this.post32Passes[0];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
-    gl.disable(gl.DEPTH_TEST);
-    gl.enable(gl.BLEND);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
-    // bound texture is the last one processed before
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[0]);
 
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[Math.max(0, i) % 2]);
+    activePass.setPassParams_DOF(params);
+    activePass.setGBufferTarget1(this.gbTargets[0]);
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
 
-    this.tonemapPass.draw();
-
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
+  renderPass_Present(camera: Camera) {
+    let activePass = this.post8Passes[0];
 
-  // TODO: pass any info you need as args
-  renderPostProcessLDR() {
-    // TODO: replace this with your post 8-bit pipeline
-    // the loop shows how to swap between frame buffers and textures given a list of processes,
-    // but specific shaders (e.g. motion blur) need specific info as textures
-    for (let i = 0; i < this.post8Passes.length; i++){
-      // pingpong framebuffers for each pass
-      // if this is the last pass, default is bound
-      if (i < this.post8Passes.length - 1) gl.bindFramebuffer(gl.FRAMEBUFFER, this.post8Buffers[(i + 1) % 2]);
-      else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-      gl.disable(gl.DEPTH_TEST);
-      gl.enable(gl.BLEND);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.clear(gl.COLOR_BUFFER_BIT  | gl.DEPTH_BUFFER_BIT);
 
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, this.post8Targets[(i) % 2]);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
 
-      this.post8Passes[i].draw();
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
 
-      // bind default
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
 };

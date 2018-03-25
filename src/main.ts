@@ -16,14 +16,20 @@ import Texture from './rendering/gl/Texture';
 // };
 
 let square: Square;
+let shouldCapture: boolean = false;
 
-// TODO: replace with your scene's stuff
+let controls = {
+  saveImage: saveImage,
+  dof: {
+    focalLength: 10,
+    blend: 1.0
+  }
+};
 
 let obj0: string;
 let mesh0: Mesh;
 
 let tex0: Texture;
-
 
 var timer = {
   deltaTime: 0.0,
@@ -56,6 +62,25 @@ function loadScene() {
   tex0 = new Texture('../resources/textures/wahoo.bmp')
 }
 
+function saveImage() {
+  shouldCapture = true;
+}
+
+function downloadImage() {
+  // Dump the canvas contents to a file.
+  var canvas = <HTMLCanvasElement>document.getElementById("canvas");
+  canvas.toBlob(function(blob) {
+    var link = document.createElement("a");
+    link.download = "image.png";
+
+    link.href = URL.createObjectURL(blob);
+    console.log(blob);
+
+    link.click();
+
+  }, 'image/png');
+}
+
 
 function main() {
   // Initial display for framerate
@@ -67,7 +92,14 @@ function main() {
   document.body.appendChild(stats.domElement);
 
   // Add controls to the gui
-  // const gui = new DAT.GUI();
+  const gui = new DAT.GUI();
+  gui.add(controls, 'saveImage').name('Save Image');
+
+  var group;
+
+  group = gui.addFolder('Depth of Field');
+  group.add(controls.dof, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
+  group.add(controls.dof, 'focalLength', 0, 100.0).step(0.5).name('Focal Length').listen();
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -104,6 +136,8 @@ function main() {
 
     standardDeferred.bindTexToUnit("tex_Color", tex0, 0);
 
+    renderer.deferredShader.setLightPosition(vec3.fromValues(15, 15, 15));
+
     renderer.clear();
     renderer.clearGB();
 
@@ -113,11 +147,20 @@ function main() {
     // render from gbuffers into 32-bit color buffer
     renderer.renderFromGBuffer(camera);
     // apply 32-bit post and tonemap from 32-bit color to 8-bit color
-    renderer.renderPostProcessHDR();
-    // apply 8-bit post and draw
-    renderer.renderPostProcessLDR();
+    // renderer.renderPostProcessHDR();
+    // // apply 8-bit post and draw
+    // renderer.renderPostProcessLDR();
+
+    renderer.renderPass_DOF(camera, controls.dof);
+    renderer.renderPass_Present(camera);
 
     stats.end();
+
+    if (shouldCapture) {
+      downloadImage();
+      shouldCapture = false;
+    }
+
     requestAnimationFrame(tick);
   }
 
