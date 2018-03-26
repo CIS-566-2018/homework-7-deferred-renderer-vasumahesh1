@@ -65,9 +65,10 @@ void main() {
   float cameraDepth = gb0.w;
 
 	vec4 diffuseColor = gb2;
-  vec4 worldPosition = gb1;
 
   vec4 finalColor = calculateLighting(diffuseColor, normal);
+
+  finalColor += vec4(gb1.xyz, 0.0f);
 
 	out_Col = finalColor;
 }

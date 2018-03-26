@@ -15,6 +15,7 @@ out vec4 fragColor[3]; // The data in the ith index of this array of outputs
                        // separate images from a single render pass.
 
 uniform sampler2D tex_Color;
+uniform sampler2D emi_Color;
 
 
 void main() {
@@ -23,11 +24,12 @@ void main() {
     // two gbuffers and basic color to the third.
 
     vec3 col = texture(tex_Color, fs_UV).rgb;
+    vec3 emissive = texture(emi_Color, fs_UV).rgb;
 
     // if using textures, inverse gamma correct
     col = pow(col, vec3(2.2));
 
     fragColor[0] = vec4(fs_Nor.xyz, fs_Pos.z);
-    fragColor[1] = fs_WorldPos;
+    fragColor[1] = vec4(emissive, 1.0f);
     fragColor[2] = vec4(col, 1.0);
 }

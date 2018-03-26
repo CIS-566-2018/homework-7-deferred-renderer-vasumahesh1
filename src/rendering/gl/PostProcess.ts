@@ -16,9 +16,9 @@ class PostProcess extends ShaderProgram {
 	dof_unifBlend: WebGLUniformLocation;
 	dof_unifFocalLength: WebGLUniformLocation;
 
+	gb_target0: WebGLUniformLocation;
 	gb_target1: WebGLUniformLocation;
 	gb_target2: WebGLUniformLocation;
-	gb_target3: WebGLUniformLocation;
 
 	constructor(fragProg: Shader, tag: string = "default") {
 		super([new Shader(gl.VERTEX_SHADER, require('../../shaders/screenspace-vert.glsl')),
@@ -27,9 +27,9 @@ class PostProcess extends ShaderProgram {
 		this.unifLightPos = gl.getUniformLocation(this.prog, "u_LightPos");
 		this.unifDimensions = gl.getUniformLocation(this.prog, "u_Dimensions");
 		this.unifFrame = gl.getUniformLocation(this.prog, "u_frame");
-		this.gb_target1 = gl.getUniformLocation(this.prog, "u_gb0");
-		this.gb_target2 = gl.getUniformLocation(this.prog, "u_gb1");
-		this.gb_target3 = gl.getUniformLocation(this.prog, "u_gb2");
+		this.gb_target0 = gl.getUniformLocation(this.prog, "u_gb0");
+		this.gb_target1 = gl.getUniformLocation(this.prog, "u_gb1");
+		this.gb_target2 = gl.getUniformLocation(this.prog, "u_gb2");
 
 		this.dof_unifBlend = gl.getUniformLocation(this.prog, "u_DOF_Blend");
 		this.dof_unifFocalLength = gl.getUniformLocation(this.prog, "u_DOF_Focal");
@@ -52,24 +52,24 @@ class PostProcess extends ShaderProgram {
     }
   }
 
-  setGBufferTarget1(buffer: any) {
+  setGBufferTarget0(buffer: number) {
+    this.use();
+    if (this.gb_target0 !== -1) {
+      gl.uniform1i(this.gb_target0, buffer);
+    }
+  }
+
+  setGBufferTarget1(buffer: number) {
     this.use();
     if (this.gb_target1 !== -1) {
       gl.uniform1i(this.gb_target1, buffer);
     }
   }
 
-  setGBufferTarget2(buffer: any) {
+  setGBufferTarget2(buffer: number) {
     this.use();
     if (this.gb_target2 !== -1) {
       gl.uniform1i(this.gb_target2, buffer);
-    }
-  }
-
-  setGBufferTarget3(buffer: any) {
-    this.use();
-    if (this.gb_target3 !== -1) {
-      gl.uniform1i(this.gb_target3, buffer);
     }
   }
 

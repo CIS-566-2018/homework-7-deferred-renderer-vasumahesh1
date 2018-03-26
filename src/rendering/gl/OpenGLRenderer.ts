@@ -208,7 +208,7 @@ class OpenGLRenderer {
   }
 
 
-  renderToGBuffer(camera: Camera, gbProg: ShaderProgram, drawables: Array<Drawable>) {
+  renderToGBuffer(camera: Camera, gbProg: ShaderProgram, drawables: Array<Drawable>, textures: Array<Array<any>>) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.gBuffer);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.enable(gl.DEPTH_TEST);
@@ -229,8 +229,12 @@ class OpenGLRenderer {
 
     gbProg.setTime(this.currentTime);
 
-    for (let drawable of drawables) {
-      gbProg.draw(drawable);
+    for (let idx in drawables) {
+
+      gbProg.bindTexToUnit("tex_Color", textures[idx][0], 0);
+      gbProg.bindTexToUnit("emi_Color", textures[idx][1], 1);
+
+      gbProg.draw(drawables[idx]);
     }
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -352,8 +356,11 @@ class OpenGLRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[0]);
 
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[0]);
+
     activePass.setPassParams_DOF(params);
-    activePass.setGBufferTarget1(this.gbTargets[0]);
+    activePass.setGBufferTarget0(1);
     activePass.setScreenSize(this.canvas.width, this.canvas.height);
     activePass.draw();
 

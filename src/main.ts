@@ -28,8 +28,30 @@ let controls = {
 
 let obj0: string;
 let mesh0: Mesh;
+let mesh1: Mesh;
+let mesh2: Mesh;
 
 let tex0: Texture;
+
+let meshes: Array<string> = [
+  '../resources/obj/car_1.obj',
+  '../resources/obj/car_2.obj',
+  '../resources/obj/car_3.obj',
+  '../resources/obj/bus.obj',
+  '../resources/obj/road.obj'
+];
+
+let textures: any = [
+  ['../resources/textures/car_1.png', '../resources/textures/car_1_emissive.png'],
+  ['../resources/textures/car_2.png', '../resources/textures/car_2_emissive.png'],
+  ['../resources/textures/car_3.png', '../resources/textures/car_2_emissive.png'],
+  ['../resources/textures/bus.png', '../resources/textures/default_emissive.png'],
+  ['../resources/textures/road.png', '../resources/textures/default_emissive.png']
+];
+
+let sceneOBJs: Array<string> = [];
+let sceneMeshes: Array<Mesh> = [];
+let sceneTextures: Array<Array<Texture>> = [];
 
 var timer = {
   deltaTime: 0.0,
@@ -45,9 +67,12 @@ var timer = {
 
 
 function loadOBJText() {
-  obj0 = readTextFile('../resources/obj/wahoo.obj')
-}
+  obj0 = readTextFile('../resources/obj/wahoo.obj');
 
+  for (var itr = 0; itr < meshes.length; ++itr) {
+    sceneOBJs.push(readTextFile(meshes[itr]));
+  }
+}
 
 function loadScene() {
   square && square.destroy();
@@ -58,6 +83,25 @@ function loadScene() {
 
   mesh0 = new Mesh(obj0, vec3.fromValues(0, 0, 0));
   mesh0.create();
+
+  mesh1 = new Mesh(obj0, vec3.fromValues(-10, 0, -10));
+  mesh1.create();
+
+  mesh2 = new Mesh(obj0, vec3.fromValues(10, 0, 10));
+  mesh2.create();
+
+  for (var itr = 0; itr < sceneOBJs.length; ++itr) {   
+    let mesh = new Mesh(sceneOBJs[itr], vec3.fromValues(0, 0, 0));
+    mesh.create();
+
+    sceneMeshes.push(mesh);
+  }
+
+  for (var itr = 0; itr < textures.length; ++itr) {
+    let tex1 = new Texture(textures[itr][0]);
+    let tex2 = new Texture(textures[itr][1]);
+    sceneTextures.push([tex1, tex2]);
+  }
 
   tex0 = new Texture('../resources/textures/wahoo.bmp')
 }
@@ -114,7 +158,7 @@ function main() {
   // Initial call to load scene
   loadScene();
 
-  const camera = new Camera(vec3.fromValues(0, 9, 25), vec3.fromValues(0, 9, 0));
+  const camera = new Camera(vec3.fromValues(0, 0, 25), vec3.fromValues(0, 0, 0));
 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(0, 0, 0, 1);
@@ -125,7 +169,7 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/standard-frag.glsl')),
     ]);
 
-  standardDeferred.setupTexUnits(["tex_Color"]);
+  standardDeferred.setupTexUnits(["tex_Color", "emi_Color"]);
 
   function tick() {
     camera.update();
@@ -134,7 +178,7 @@ function main() {
     timer.updateTime();
     renderer.updateTime(timer.deltaTime, timer.currentTime);
 
-    standardDeferred.bindTexToUnit("tex_Color", tex0, 0);
+    // standardDeferred.bindTexToUnit("tex_Color", tex0, 0);
 
     renderer.deferredShader.setLightPosition(vec3.fromValues(15, 15, 15));
 
@@ -143,7 +187,8 @@ function main() {
 
     // TODO: pass any arguments you may need for shader passes
     // forward render mesh info into gbuffers
-    renderer.renderToGBuffer(camera, standardDeferred, [mesh0]);
+    // renderer.renderToGBuffer(camera, standardDeferred, [mesh0, mesh1, mesh2]);
+    renderer.renderToGBuffer(camera, standardDeferred, sceneMeshes, sceneTextures);
     // render from gbuffers into 32-bit color buffer
     renderer.renderFromGBuffer(camera);
     // apply 32-bit post and tonemap from 32-bit color to 8-bit color
