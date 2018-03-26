@@ -68,7 +68,7 @@ void main() {
 
   vec4 finalColor = calculateLighting(diffuseColor, normal);
 
-  finalColor += vec4(gb1.xyz, 0.0f);
+  finalColor += (vec4(gb1.xyz, 0.0f) * 5.0);
 
 	out_Col = finalColor;
 }

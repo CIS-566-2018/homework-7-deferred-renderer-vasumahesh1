@@ -23,6 +23,13 @@ let controls = {
   dof: {
     focalLength: 10,
     blend: 1.0
+  },
+  tonemap: {
+    enabled: true
+  },
+  bloom: {
+    enabled: true,
+    blend: 1.0
   }
 };
 
@@ -145,6 +152,13 @@ function main() {
   group.add(controls.dof, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
   group.add(controls.dof, 'focalLength', 0, 100.0).step(0.5).name('Focal Length').listen();
 
+  group = gui.addFolder('Tonemap');
+  group.add(controls.tonemap, 'enabled').name('Enabled').listen();
+
+  group = gui.addFolder('Bloom');
+  group.add(controls.bloom, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
+  group.add(controls.bloom, 'enabled').name('Enabled').listen();
+
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
   const gl = <WebGL2RenderingContext> canvas.getContext('webgl2');
@@ -196,7 +210,10 @@ function main() {
     // // apply 8-bit post and draw
     // renderer.renderPostProcessLDR();
 
-    renderer.renderPass_DOF(camera, controls.dof);
+    renderer.renderPass_Bloom(controls.bloom);
+    // renderer.renderPass_DOF(camera, controls.dof);
+    renderer.renderPass_ToneMapping(controls.tonemap);
+    
     renderer.renderPass_Present(camera);
 
     stats.end();

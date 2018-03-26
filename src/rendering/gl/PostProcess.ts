@@ -11,7 +11,10 @@ class PostProcess extends ShaderProgram {
 	name: string;
 
 	unifLightPos: WebGLUniformLocation;
+	unifTonemapEnabled: WebGLUniformLocation;
 	unifDimensions: WebGLUniformLocation;
+	unifBloomBlur: WebGLUniformLocation;
+	unifBloomBlend: WebGLUniformLocation;
 
 	dof_unifBlend: WebGLUniformLocation;
 	dof_unifFocalLength: WebGLUniformLocation;
@@ -26,6 +29,9 @@ class PostProcess extends ShaderProgram {
 
 		this.unifLightPos = gl.getUniformLocation(this.prog, "u_LightPos");
 		this.unifDimensions = gl.getUniformLocation(this.prog, "u_Dimensions");
+		this.unifTonemapEnabled = gl.getUniformLocation(this.prog, "u_UseTonemap");
+		this.unifBloomBlur = gl.getUniformLocation(this.prog, "u_BloomBlur");
+		this.unifBloomBlend = gl.getUniformLocation(this.prog, "u_BloomBlend");
 		this.unifFrame = gl.getUniformLocation(this.prog, "u_frame");
 		this.gb_target0 = gl.getUniformLocation(this.prog, "u_gb0");
 		this.gb_target1 = gl.getUniformLocation(this.prog, "u_gb1");
@@ -52,6 +58,13 @@ class PostProcess extends ShaderProgram {
     }
   }
 
+  setToneMapping(enable: number) {
+    this.use();
+    if (this.unifTonemapEnabled !== -1) {
+      gl.uniform1i(this.unifTonemapEnabled, enable);
+    }
+  }
+
   setGBufferTarget0(buffer: number) {
     this.use();
     if (this.gb_target0 !== -1) {
@@ -63,6 +76,20 @@ class PostProcess extends ShaderProgram {
     this.use();
     if (this.gb_target1 !== -1) {
       gl.uniform1i(this.gb_target1, buffer);
+    }
+  }
+
+  setBloomBlur(buffer: number) {
+    this.use();
+    if (this.unifBloomBlur !== -1) {
+      gl.uniform1i(this.unifBloomBlur, buffer);
+    }
+  }
+
+  setBloomBlend(blendAmount: number) {
+    this.use();
+    if (this.unifBloomBlend !== -1) {
+      gl.uniform1f(this.unifBloomBlend, blendAmount);
     }
   }
 

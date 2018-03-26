@@ -57,19 +57,24 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
     this.currentTime = 0.0;
     this.gbTargets = [undefined, undefined, undefined];
-    this.post8Buffers = [undefined, undefined];
-    this.post8Targets = [undefined, undefined];
+    this.post8Buffers = [undefined, undefined, undefined];
+    this.post8Targets = [undefined, undefined, undefined];
     this.post8Passes = [];
 
-    this.post32Buffers = [undefined, undefined];
-    this.post32Targets = [undefined, undefined];
+    this.post32Buffers = [undefined, undefined, undefined];
+    this.post32Targets = [undefined, undefined, undefined];
     this.post32Passes = [];
 
     // TODO: these are placeholder post shaders, replace them with something good
     this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/present.glsl'))));
     // this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/examplePost2-frag.glsl'))));
 
-    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF.glsl'))));
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF.glsl')))); // 0
+
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_Extract.glsl')))); // 1 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_BlurX.glsl')))); // 2 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_BlurY.glsl')))); // 3 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_Composite.glsl')))); // 4 // Extract High Luminance Pixels
 
     if (!gl.getExtension("OES_texture_float_linear")) {
       console.error("OES_texture_float_linear not available");
@@ -345,6 +350,92 @@ class OpenGLRenderer {
   //   }
   // }
 
+  renderPass_Bloom1(params: any) {
+    let activePass = this.post32Passes[1];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[0]);
+
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_Bloom_BlurX(params: any) {
+    let activePass = this.post32Passes[2];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_Bloom_BlurY(params: any) {
+    let activePass = this.post32Passes[3];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_Bloom_Composite(params: any) {
+    let activePass = this.post32Passes[4];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[0]);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
+
+    activePass.setBloomBlur(1);
+    activePass.setBloomBlend(params.blend);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_Bloom(params: any) {
+    this.renderPass_Bloom1(params);
+    this.renderPass_Bloom_BlurX(params);
+    this.renderPass_Bloom_BlurY(params);
+    this.renderPass_Bloom_Composite(params);
+  }
+
   renderPass_DOF(camera: Camera, params: any) {
     let activePass = this.post32Passes[0];
 
@@ -369,6 +460,26 @@ class OpenGLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
+  renderPass_ToneMapping(config: any)
+  {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post8Buffers[0]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    // bound texture is the last one processed before
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+
+    let val = config.enabled ? 1 : 0;
+    this.tonemapPass.setToneMapping(val);
+    this.tonemapPass.draw();
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
   renderPass_Present(camera: Camera) {
     let activePass = this.post8Passes[0];
 
@@ -380,7 +491,7 @@ class OpenGLRenderer {
     gl.clear(gl.COLOR_BUFFER_BIT  | gl.DEPTH_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post8Targets[0]);
 
     activePass.setScreenSize(this.canvas.width, this.canvas.height);
     activePass.draw();
