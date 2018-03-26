@@ -21,6 +21,14 @@ let shouldCapture: boolean = false;
 
 let controls = {
   saveImage: saveImage,
+  skyLight: {
+    color: [255, 255, 255],
+    intensity: 4,
+    direction: [15, 15, 15]
+  },
+  godray: {
+
+  },
   dof: {
     focalLength: 10,
     blend: 1.0
@@ -32,6 +40,9 @@ let controls = {
     enabled: true,
     blend: 1.0,
     iterations: 1
+  },
+  artistic: {
+    effect: 'none'
   }
 };
 
@@ -197,10 +208,22 @@ function main() {
   group = gui.addFolder('Tonemap');
   group.add(controls.tonemap, 'enabled').name('Enabled').listen();
 
+  group = gui.addFolder('Sky Light');
+  group.addColor(controls.skyLight, 'color').name('Color').listen();
+  group.add(controls.skyLight, 'intensity', 0, 10.0).step(0.05).name('Intensity').listen();
+
+  group = group.addFolder('Light Position');
+  group.add(controls.skyLight.direction, '0', -20, 20).step(0.5).name('X').listen();
+  group.add(controls.skyLight.direction, '1', -20, 20).step(0.5).name('Y').listen();
+  group.add(controls.skyLight.direction, '2', -20, 20).step(0.5).name('Z').listen();
+
   group = gui.addFolder('Bloom');
   group.add(controls.bloom, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
   group.add(controls.bloom, 'iterations', 1.0, 4.0).step(1.0).name('Iterations').listen();
   group.add(controls.bloom, 'enabled').name('Enabled').listen();
+  
+  group = gui.addFolder('Artistic');
+  gui.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } );
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -229,6 +252,7 @@ function main() {
   standardDeferred.setupTexUnits(["tex_Color", "emi_Color"]);
 
   renderer.deferredShader.setSpotLights(lights);
+  renderer.post32Passes[6].setSpotLights(lights);
 
   function tick() {
     camera.update();
@@ -239,7 +263,13 @@ function main() {
 
     // standardDeferred.bindTexToUnit("tex_Color", tex0, 0);
 
-    renderer.deferredShader.setLightPosition(vec3.fromValues(15, 15, 15));
+
+    let lightDirection = controls.skyLight.direction;
+    let skyColor = controls.skyLight.color;
+    let intensity = controls.skyLight.intensity;
+
+    renderer.deferredShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
+    renderer.deferredShader.setLightColor(vec3.fromValues(skyColor[0] * intensity / 255, skyColor[1] * intensity / 255, skyColor[2] * intensity / 255));
 
     renderer.clear();
     renderer.clearGB();
@@ -255,11 +285,19 @@ function main() {
     // // apply 8-bit post and draw
     // renderer.renderPostProcessLDR();
 
-    renderer.renderPass_Bloom(controls.bloom);
+    // renderer.renderPass_Bloom(controls.bloom);
+    renderer.renderPass_GodRay(camera, controls.godray);
     // renderer.renderPass_DOF(camera, controls.dof);
+
+    renderer.renderPass_Composite(controls);
+
     renderer.renderPass_ToneMapping(controls.tonemap);
     
-    renderer.renderPass_Present(camera);
+    if (controls.artistic.effect == 'none') {
+      renderer.renderPass_Present(camera);
+    } else if (controls.artistic.effect == 'sketch') {
+      renderer.renderPass_PresentSketch(camera);
+    }
 
     stats.end();
 

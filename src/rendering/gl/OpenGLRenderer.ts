@@ -31,6 +31,8 @@ class OpenGLRenderer {
   post8Passes: PostProcess[];
   post32Passes: PostProcess[];
 
+  downSampleGodRay: number = 8;
+
   currentTime: number; // timer number to apply to all drawing shaders
 
   // the shader that renders from the gbuffers into the postbuffers
@@ -57,16 +59,17 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
     this.currentTime = 0.0;
     this.gbTargets = [undefined, undefined, undefined, undefined];
-    this.post8Buffers = [undefined, undefined, undefined];
-    this.post8Targets = [undefined, undefined, undefined];
+    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined];
+    this.post8Targets = [undefined, undefined, undefined, undefined, undefined];
     this.post8Passes = [];
 
-    this.post32Buffers = [undefined, undefined, undefined];
-    this.post32Targets = [undefined, undefined, undefined];
+    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined];
+    this.post32Targets = [undefined, undefined, undefined, undefined, undefined];
     this.post32Passes = [];
 
     // TODO: these are placeholder post shaders, replace them with something good
-    this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/present.glsl'))));
+    this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/present.glsl')))); // 0
+    this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post8_Sketch.glsl')))); // 1
     // this.add8BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/examplePost2-frag.glsl'))));
 
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF.glsl')))); // 0
@@ -74,7 +77,12 @@ class OpenGLRenderer {
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_Extract.glsl')))); // 1 // Extract High Luminance Pixels
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_BlurX.glsl')))); // 2 // Extract High Luminance Pixels
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_BlurY.glsl')))); // 3 // Extract High Luminance Pixels
-    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Bloom_Composite.glsl')))); // 4 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_Composite.glsl')))); // 4 // Extract High Luminance Pixels
+
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_Pre.glsl')))); // 5 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_Sample.glsl')))); // 6 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_BlurX.glsl')))); // 7 // Extract High Luminance Pixels
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_BlurY.glsl')))); // 8 // Extract High Luminance Pixels
 
     if (!gl.getExtension("OES_texture_float_linear")) {
       console.error("OES_texture_float_linear not available");
@@ -175,14 +183,26 @@ class OpenGLRenderer {
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[i]);
       gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
 
-      this.post32Targets[i] = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[i]);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.FLOAT, null);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
+      // God Ray Buffers
+      if (i == 3 || i == 4) {
+        this.post32Targets[i] = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[i]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay, 0, gl.RGBA, gl.FLOAT, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
+      } else{
+        this.post32Targets[i] = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[i]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.FLOAT, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
+      }
 
       FBOstatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
       if (FBOstatus != gl.FRAMEBUFFER_COMPLETE) {
@@ -410,7 +430,7 @@ class OpenGLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
-  renderPass_Bloom_Composite(params: any) {
+  renderPass_Composite(params: any) {
     let activePass = this.post32Passes[4];
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
@@ -424,8 +444,12 @@ class OpenGLRenderer {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
 
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
+
     activePass.setBloomBlur(1);
-    activePass.setBloomBlend(params.blend);
+    activePass.setGodRay(2);
+    activePass.setBloomBlend(params.bloom.blend);
     activePass.draw();
 
     // bind default frame buffer
@@ -448,8 +472,6 @@ class OpenGLRenderer {
       this.renderPass_Bloom_BlurX(params);
       this.renderPass_Bloom_BlurY(params);
     }
-
-    this.renderPass_Bloom_Composite(params);
   }
 
   renderPass_DOF(camera: Camera, params: any) {
@@ -496,6 +518,100 @@ class OpenGLRenderer {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  renderPass_GodRay_Pre(camera: any, params: any) {
+    let activePass = this.post32Passes[5];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[3]);
+    activePass.setGBufferTarget3(1);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_GodRay_Sample(camera: any, params: any) {
+    let activePass = this.post32Passes[6];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[3]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    let view = camera.viewMatrix;
+    let proj = camera.projectionMatrix;
+    activePass.setViewMatrix(view);
+    activePass.setProjMatrix(proj);
+
+    // bind: u_frame
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_GodRay_BlurX(params: any) {
+    let activePass = this.post32Passes[7];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_GodRay_BlurY(params: any) {
+    let activePass = this.post32Passes[8];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[3]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_GodRay(camera: any, params: any) {
+    // if (!params.enabled) {
+    //   return this.renderPass_Copy(0, 2);
+    // }
+
+    this.renderPass_GodRay_Pre(camera, params);
+    this.renderPass_GodRay_Sample(camera, params);
+    this.renderPass_GodRay_BlurX(params);
+    this.renderPass_GodRay_BlurY(params);
+  }
+
   renderPass_Copy(idx1:number, idx2:number) {
     let activePass = this.post8Passes[0]; // Default Present
 
@@ -519,6 +635,27 @@ class OpenGLRenderer {
 
   renderPass_Present(camera: Camera) {
     let activePass = this.post8Passes[0];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.clear(gl.COLOR_BUFFER_BIT  | gl.DEPTH_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post8Targets[0]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_PresentSketch(camera: Camera) {
+    let activePass = this.post8Passes[1];
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 

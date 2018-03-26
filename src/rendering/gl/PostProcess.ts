@@ -16,12 +16,14 @@ class PostProcess extends ShaderProgram {
 	name: string;
 
 	unifLightPos: WebGLUniformLocation;
+	unifLightColor: WebGLUniformLocation;
 	unifTonemapEnabled: WebGLUniformLocation;
 	unifDimensions: WebGLUniformLocation;
 	unifBloomBlur: WebGLUniformLocation;
 	unifBloomBlend: WebGLUniformLocation;
 	unifNumPointLights: WebGLUniformLocation;
 	unifNumSpotLights: WebGLUniformLocation;
+	unifGodRay: WebGLUniformLocation;
 
 	dof_unifBlend: WebGLUniformLocation;
 	dof_unifFocalLength: WebGLUniformLocation;
@@ -29,6 +31,7 @@ class PostProcess extends ShaderProgram {
 	gb_target0: WebGLUniformLocation;
 	gb_target1: WebGLUniformLocation;
 	gb_target2: WebGLUniformLocation;
+	gb_target3: WebGLUniformLocation;
 
 	unifPointLights: Array<any>;
 	unifSpotLights: Array<any>;
@@ -38,14 +41,17 @@ class PostProcess extends ShaderProgram {
 			fragProg]);
 
 		this.unifLightPos = gl.getUniformLocation(this.prog, "u_LightPos");
+		this.unifLightColor = gl.getUniformLocation(this.prog, "u_LightColor");
 		this.unifDimensions = gl.getUniformLocation(this.prog, "u_Dimensions");
 		this.unifTonemapEnabled = gl.getUniformLocation(this.prog, "u_UseTonemap");
 		this.unifBloomBlur = gl.getUniformLocation(this.prog, "u_BloomBlur");
+		this.unifGodRay = gl.getUniformLocation(this.prog, "u_GodRay");
 		this.unifBloomBlend = gl.getUniformLocation(this.prog, "u_BloomBlend");
 		this.unifFrame = gl.getUniformLocation(this.prog, "u_frame");
 		this.gb_target0 = gl.getUniformLocation(this.prog, "u_gb0");
 		this.gb_target1 = gl.getUniformLocation(this.prog, "u_gb1");
 		this.gb_target2 = gl.getUniformLocation(this.prog, "u_gb2");
+		this.gb_target3 = gl.getUniformLocation(this.prog, "u_gb3");
 
 		this.dof_unifBlend = gl.getUniformLocation(this.prog, "u_DOF_Blend");
 		this.dof_unifFocalLength = gl.getUniformLocation(this.prog, "u_DOF_Focal");
@@ -101,6 +107,13 @@ class PostProcess extends ShaderProgram {
     }
   }
 
+  setLightColor(color: vec3) {
+    this.use();
+    if (this.unifLightColor !== -1) {
+      gl.uniform3fv(this.unifLightColor, color);
+    }
+  }
+
   setToneMapping(enable: number) {
     this.use();
     if (this.unifTonemapEnabled !== -1) {
@@ -129,6 +142,13 @@ class PostProcess extends ShaderProgram {
     }
   }
 
+  setGodRay(buffer: number) {
+    this.use();
+    if (this.unifGodRay !== -1) {
+      gl.uniform1i(this.unifGodRay, buffer);
+    }
+  }
+
   setBloomBlend(blendAmount: number) {
     this.use();
     if (this.unifBloomBlend !== -1) {
@@ -140,6 +160,13 @@ class PostProcess extends ShaderProgram {
     this.use();
     if (this.gb_target2 !== -1) {
       gl.uniform1i(this.gb_target2, buffer);
+    }
+  }
+
+  setGBufferTarget3(buffer: number) {
+    this.use();
+    if (this.gb_target3 !== -1) {
+      gl.uniform1i(this.gb_target3, buffer);
     }
   }
 

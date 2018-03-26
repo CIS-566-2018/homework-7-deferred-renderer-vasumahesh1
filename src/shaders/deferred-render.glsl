@@ -15,6 +15,7 @@ uniform sampler2D u_gb3;
 uniform float u_Time;
 
 uniform vec3 u_LightPos;
+uniform vec3 u_LightColor;
 uniform ivec2 u_Dimensions;
 
 uniform mat4 u_View;
@@ -147,8 +148,8 @@ vec4 calculateMainLighting(vec4 inputColor, vec3 normal) {
     vec3 v         = reflect(-lightVec, normal);
     float specFactor = pow(max(dot(v, normalize(vec3(u_CamPos))), 0.0f), 128.0);
           
-    diffuse = diffuseTerm * vec4(1.0); // TODO: pass light color
-    spec    = specFactor * vec4(1.0); // TODO: pass light color
+    diffuse = diffuseTerm * vec4(u_LightColor, 1.0);
+    spec    = specFactor * vec4(u_LightColor, 1.0);
   }
 
   vec4 totalLightContrib = diffuse + spec + ambient;
