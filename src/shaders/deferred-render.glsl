@@ -10,16 +10,123 @@ out vec4 out_Col;
 uniform sampler2D u_gb0;
 uniform sampler2D u_gb1;
 uniform sampler2D u_gb2;
+uniform sampler2D u_gb3;
 
 uniform float u_Time;
 
 uniform vec3 u_LightPos;
+uniform ivec2 u_Dimensions;
 
 uniform mat4 u_View;
+uniform mat4 u_Proj;
 uniform vec4 u_CamPos;
 
+#define MAX_POINT_LIGHTS 20
+#define MAX_SPOT_LIGHTS 20
 
-vec4 calculateLighting(vec4 inputColor, vec3 normal) {
+struct PointLight {
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+
+    vec3 position;
+    float range;
+    float contrib;
+
+    vec3 attn;
+};
+
+struct SpotLight {
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+
+    vec3 position;
+    float range;
+    float contrib;
+
+    vec3 direction;
+    float kSpot;
+
+    vec3 attn;
+};
+
+uniform SpotLight u_SpotLights[MAX_SPOT_LIGHTS];
+uniform uint u_NumSpotLights;
+
+vec4 calculateSpotLightContribution(vec4 inputColor, vec3 normal, vec3 fragPosition) {
+  if (u_NumSpotLights <= uint(0)) {
+    return inputColor;
+  }
+
+  float alpha = inputColor.a;
+
+  vec4 ambient, diffuse, spec;
+
+  vec4 totalLightContrib = vec4(0, 0, 0, 0);
+
+  for (uint i = uint(0); i < u_NumSpotLights; i++) {
+    SpotLight light = u_SpotLights[i];
+
+    // Initialize outputs.
+    ambient = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    diffuse = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    spec    = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    // The vector from the surface to the light.
+    vec3 lightVec = vec3(u_View * vec4(light.position, 1.0)) - fragPosition;
+    
+    // The distance from surface to light.
+    float d = length(lightVec);
+  
+    // Range test.
+    // if( d > light.range ) {
+    //   totalLightContrib += ambient;
+    //   continue;
+    // }
+    
+    // Normalize the light vector.
+    lightVec /= d; 
+  
+    // Ambient term.
+    ambient = light.ambient;  // TODO: Material
+
+    // Add diffuse and specular term, provided the surface is in 
+    // the line of site of the light.
+
+    float diffuseTerm = dot(lightVec, normal);
+
+    // Flatten to avoid dynamic branching.
+    if( diffuseTerm > 0.0f ) {
+      vec3 v         = reflect(-lightVec, normal);
+      float specFactor = pow(max(dot(v, normalize(vec3(u_CamPos))), 0.0f), 128.0); // TODO: Material
+            
+      diffuse = diffuseTerm * light.diffuse;
+      spec    = specFactor * light.specular;
+    }
+
+    float spot = pow(max(dot(-lightVec, normalize(vec3(u_View * vec4(light.direction, 0.0)))), 0.0), light.kSpot);
+
+    // Attenuate
+    float att = spot / dot(light.attn, vec3(1.0f, d, d * d));
+
+    diffuse *= att;
+    spec    *= att;
+    // ambient *= spot;
+
+    totalLightContrib += light.contrib * (diffuse + spec) + ambient;
+  }
+
+  inputColor = inputColor * totalLightContrib;
+
+  inputColor.a = alpha;
+
+  // TODO: Material alhpa
+
+  return inputColor;
+}
+
+vec4 calculateMainLighting(vec4 inputColor, vec3 normal) {
   float alpha = inputColor.a;
   
   // Initialize outputs.
@@ -59,16 +166,45 @@ void main() {
 
   vec4 gb0 = texture(u_gb0, fs_UV);
   vec4 gb1 = texture(u_gb1, fs_UV);
-	vec4 gb2 = texture(u_gb2, fs_UV);
-
+  vec4 gb2 = texture(u_gb2, fs_UV);
+  vec4 gb3 = texture(u_gb3, fs_UV);
+	
   vec3 normal = gb0.xyz;
   float cameraDepth = gb0.w;
 
+  float posX = gl_FragCoord.x / (float(u_Dimensions.x) - 1.0);
+  float posY = gl_FragCoord.y / (float(u_Dimensions.y) - 1.0);
+
+  vec2 ndcVec2 = vec2(posX, posY) * 2.0 - 1.0;
+
+  float t = (cameraDepth - 0.1) / (100.0 - 0.1);
+  t = clamp(t, 0.0, 1.0);
+
+  vec4 ndc = vec4(ndcVec2, t, 1.0) * cameraDepth;
+  vec4 cameraSpacePos = inverse(u_Proj) * ndc;
+
+
+  // float aspect = float(u_Dimensions.x) / float(u_Dimensions.y);
+
+  // float fovy = 45.0 * 3.1415962 / 180.0;
+
+  // vec3 ref =  vec3(u_CamPos) + t * vec3(0, 0, 1);
+  // float len = length(ref - vec3(u_CamPos));
+  // vec3 V = vec3(0,1,0) * len * tan(fovy / 2.0);
+  // vec3 H = vec3(1,0,0) * aspect * len * tan(fovy / 2.0);
+
+  // vec3 p = ref + ndc.x * H + ndc.y * V;
+
+
+
 	vec4 diffuseColor = gb2;
 
-  vec4 finalColor = calculateLighting(diffuseColor, normal);
+  vec4 finalColor = calculateMainLighting(diffuseColor, normal);
 
-  finalColor += (vec4(gb1.xyz, 0.0f) * 5.0);
+  finalColor = calculateSpotLightContribution(finalColor, normal, gb1.xyz);
+  // finalColor = calculateSpotLightContribution(finalColor, normal, cameraSpacePos.xyz);
 
-	out_Col = finalColor;
+  finalColor += (vec4(gb3.xyz, 0.0f) * 5.0);
+
+	out_Col = finalColor; //vec4(ndc.xy, 0.0, 1.0);
 }

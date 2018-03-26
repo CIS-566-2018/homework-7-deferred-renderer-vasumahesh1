@@ -56,7 +56,7 @@ class OpenGLRenderer {
 
   constructor(public canvas: HTMLCanvasElement) {
     this.currentTime = 0.0;
-    this.gbTargets = [undefined, undefined, undefined];
+    this.gbTargets = [undefined, undefined, undefined, undefined];
     this.post8Buffers = [undefined, undefined, undefined];
     this.post8Targets = [undefined, undefined, undefined];
     this.post8Passes = [];
@@ -87,11 +87,13 @@ class OpenGLRenderer {
     var gb0loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb0");
     var gb1loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb1");
     var gb2loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb2");
+    var gb3loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb3");
 
     this.deferredShader.use();
     gl.uniform1i(gb0loc, 0);
     gl.uniform1i(gb1loc, 1);
     gl.uniform1i(gb2loc, 2);
+    gl.uniform1i(gb3loc, 3);
   }
 
 
@@ -109,7 +111,7 @@ class OpenGLRenderer {
     // refresh the gbuffers
     this.gBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.gBuffer);
-    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2, gl.COLOR_ATTACHMENT3]);
 
     for (let i = 0; i < this.gbTargets.length; i ++) {
       this.gbTargets[i] = gl.createTexture();
@@ -119,7 +121,7 @@ class OpenGLRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-      if (i == 0) {
+      if (i == 0 || i == 1) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, gl.RGBA, gl.FLOAT, null);
       }
       else {
@@ -257,6 +259,8 @@ class OpenGLRenderer {
     let proj = camera.projectionMatrix;
     this.deferredShader.setViewMatrix(view);
     this.deferredShader.setProjMatrix(proj);
+
+    this.deferredShader.setScreenSize(this.canvas.width, this.canvas.height);
 
     for (let i = 0; i < this.gbTargets.length; i ++) {
       gl.activeTexture(gl.TEXTURE0 + i);

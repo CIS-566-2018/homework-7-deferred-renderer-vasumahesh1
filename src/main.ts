@@ -1,4 +1,4 @@
-import {vec3} from 'gl-matrix';
+import {vec3, vec4} from 'gl-matrix';
 import * as Stats from 'stats-js';
 import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
@@ -9,6 +9,7 @@ import {setGL} from './globals';
 import {readTextFile} from './globals';
 import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
 import Texture from './rendering/gl/Texture';
+import SpotLight from './lights/SpotLight';
 
 // Define an object with application parameters and button callbacks
 // const controls = {
@@ -39,6 +40,7 @@ let mesh1: Mesh;
 let mesh2: Mesh;
 
 let tex0: Texture;
+let lights: Array<SpotLight> = [];
 
 let meshes: Array<string> = [
   '../resources/obj/car_1.obj',
@@ -81,6 +83,43 @@ function loadOBJText() {
   }
 }
 
+function createLights() {
+  let targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(1.8, -0.5, 1.3);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(1.8, -0.5, 2.6);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+}
+
 function loadScene() {
   square && square.destroy();
   mesh0 && mesh0.destroy();
@@ -96,6 +135,8 @@ function loadScene() {
 
   mesh2 = new Mesh(obj0, vec3.fromValues(10, 0, 10));
   mesh2.create();
+
+  createLights();
 
   for (var itr = 0; itr < sceneOBJs.length; ++itr) {   
     let mesh = new Mesh(sceneOBJs[itr], vec3.fromValues(0, 0, 0));
@@ -184,6 +225,8 @@ function main() {
     ]);
 
   standardDeferred.setupTexUnits(["tex_Color", "emi_Color"]);
+
+  renderer.deferredShader.setSpotLights(lights);
 
   function tick() {
     camera.update();

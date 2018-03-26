@@ -2,8 +2,13 @@ import Texture from './Texture';
 import {gl} from '../../globals';
 import ShaderProgram, {Shader} from './ShaderProgram';
 import Drawable from './Drawable';
+import PointLight from '../../lights/PointLight';
+import SpotLight from '../../lights/SpotLight';
 import Square from '../../geometry/Square';
 import {vec2, vec3, vec4, mat4} from 'gl-matrix';
+
+const MAX_POINT_LIGHTS = 20;
+const MAX_SPOT_LIGHTS = 20;
 
 class PostProcess extends ShaderProgram {
 	static screenQuad: Square = undefined; // Quadrangle onto which we draw the frame texture of the last render pass
@@ -15,6 +20,8 @@ class PostProcess extends ShaderProgram {
 	unifDimensions: WebGLUniformLocation;
 	unifBloomBlur: WebGLUniformLocation;
 	unifBloomBlend: WebGLUniformLocation;
+	unifNumPointLights: WebGLUniformLocation;
+	unifNumSpotLights: WebGLUniformLocation;
 
 	dof_unifBlend: WebGLUniformLocation;
 	dof_unifFocalLength: WebGLUniformLocation;
@@ -22,6 +29,9 @@ class PostProcess extends ShaderProgram {
 	gb_target0: WebGLUniformLocation;
 	gb_target1: WebGLUniformLocation;
 	gb_target2: WebGLUniformLocation;
+
+	unifPointLights: Array<any>;
+	unifSpotLights: Array<any>;
 
 	constructor(fragProg: Shader, tag: string = "default") {
 		super([new Shader(gl.VERTEX_SHADER, require('../../shaders/screenspace-vert.glsl')),
@@ -43,6 +53,13 @@ class PostProcess extends ShaderProgram {
 		this.use();
 		this.name = tag;
 
+		this.unifNumPointLights = gl.getUniformLocation(this.prog, "u_NumPointLights");
+		this.unifNumSpotLights = gl.getUniformLocation(this.prog, "u_NumSpotLights");
+    this.unifPointLights = new Array<any>();
+    this.unifSpotLights = new Array<any>();
+    PointLight.markLocations(this.prog, this.unifPointLights, MAX_POINT_LIGHTS, "u_PointLights");
+    SpotLight.markLocations(this.prog, this.unifSpotLights, MAX_SPOT_LIGHTS, "u_SpotLights");
+
 		// bind texture unit 0 to this location
 		gl.uniform1i(this.unifFrame, 0); // gl.TEXTURE0
 		if (PostProcess.screenQuad === undefined) {
@@ -50,6 +67,32 @@ class PostProcess extends ShaderProgram {
 			PostProcess.screenQuad.create();
 		}
 	}
+
+	setPointLights(lights: Array<PointLight>) {
+    this.use();
+
+    if (this.unifNumPointLights !== -1) {
+      gl.uniform1ui(this.unifNumPointLights, lights.length);
+
+      for (var itr = 0; itr < lights.length; ++itr) {
+        let light = lights[itr];
+        light.setPointLightData(this.unifPointLights[itr]);
+      }
+    }
+  }
+
+  setSpotLights(lights: Array<SpotLight>) {
+    this.use();
+
+    if (this.unifNumSpotLights !== -1) {
+      gl.uniform1ui(this.unifNumSpotLights, lights.length);
+
+      for (var itr = 0; itr < lights.length; ++itr) {
+        let light = lights[itr];
+        light.setSpotLightData(this.unifSpotLights[itr]);
+      }
+    }
+  }
 
 	setLightPosition(light: vec3) {
     this.use();
