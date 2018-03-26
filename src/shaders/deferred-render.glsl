@@ -72,7 +72,7 @@ vec4 calculateSpotLightContribution(vec4 inputColor, vec3 normal, vec3 fragPosit
     ambient = vec4(0.0f, 0.0f, 0.0f, 0.0f);
     diffuse = vec4(0.0f, 0.0f, 0.0f, 0.0f);
     spec    = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-
+    
     // The vector from the surface to the light.
     vec3 lightVec = vec3(u_View * vec4(light.position, 1.0)) - fragPosition;
     
