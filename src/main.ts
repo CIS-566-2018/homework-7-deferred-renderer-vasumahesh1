@@ -30,7 +30,8 @@ let controls = {
   },
   bloom: {
     enabled: true,
-    blend: 1.0
+    blend: 1.0,
+    iterations: 1
   }
 };
 
@@ -198,6 +199,7 @@ function main() {
 
   group = gui.addFolder('Bloom');
   group.add(controls.bloom, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
+  group.add(controls.bloom, 'iterations', 1.0, 4.0).step(1.0).name('Iterations').listen();
   group.add(controls.bloom, 'enabled').name('Enabled').listen();
 
   // get canvas and webgl context

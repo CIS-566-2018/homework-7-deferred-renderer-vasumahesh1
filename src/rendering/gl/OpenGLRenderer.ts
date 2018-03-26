@@ -354,7 +354,7 @@ class OpenGLRenderer {
   //   }
   // }
 
-  renderPass_Bloom1(params: any) {
+  renderPass_Bloom_Extract(params: any) {
     let activePass = this.post32Passes[1];
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
@@ -434,9 +434,21 @@ class OpenGLRenderer {
   }
 
   renderPass_Bloom(params: any) {
-    this.renderPass_Bloom1(params);
+    if (!params.enabled) {
+      return this.renderPass_Copy(0, 2);
+    }
+
+    this.renderPass_Bloom_Extract(params);
     this.renderPass_Bloom_BlurX(params);
     this.renderPass_Bloom_BlurY(params);
+
+    let count = params.iterations - 1;
+
+    for (var itr = 0; itr < count; ++itr) {
+      this.renderPass_Bloom_BlurX(params);
+      this.renderPass_Bloom_BlurY(params);
+    }
+
     this.renderPass_Bloom_Composite(params);
   }
 
@@ -482,6 +494,27 @@ class OpenGLRenderer {
     this.tonemapPass.draw();
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  renderPass_Copy(idx1:number, idx2:number) {
+    let activePass = this.post8Passes[0]; // Default Present
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[idx2]);
+
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.clear(gl.COLOR_BUFFER_BIT  | gl.DEPTH_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[idx1]);
+
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
   renderPass_Present(camera: Camera) {

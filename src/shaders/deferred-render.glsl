@@ -172,30 +172,29 @@ void main() {
   vec3 normal = gb0.xyz;
   float cameraDepth = gb0.w;
 
-  float posX = gl_FragCoord.x / (float(u_Dimensions.x) - 1.0);
-  float posY = gl_FragCoord.y / (float(u_Dimensions.y) - 1.0);
+  float posX = (fs_UV.x / float(u_Dimensions.x)) * 2.0 - 1.0;
+  float posY = 1.0 - (fs_UV.y / float(u_Dimensions.y)) * 2.0;
 
-  vec2 ndcVec2 = vec2(posX, posY) * 2.0 - 1.0;
+  vec2 ndcVec2 = vec2(posX, posY);
 
   float t = (cameraDepth - 0.1) / (100.0 - 0.1);
-  t = clamp(t, 0.0, 1.0);
+  // t = t * 2.0 - 1.0;
+  // t = clamp(t, 0.0, 1.0);
 
   vec4 ndc = vec4(ndcVec2, t, 1.0) * cameraDepth;
   vec4 cameraSpacePos = inverse(u_Proj) * ndc;
-
+  // cameraSpacePos /= cameraSpacePos.w;
 
   // float aspect = float(u_Dimensions.x) / float(u_Dimensions.y);
 
   // float fovy = 45.0 * 3.1415962 / 180.0;
 
-  // vec3 ref =  vec3(u_CamPos) + t * vec3(0, 0, 1);
-  // float len = length(ref - vec3(u_CamPos));
+  // vec3 ref =  vec3(0.0) + t * vec3(0, 0, 1);
+  // float len = length(ref - vec3(0.0));
   // vec3 V = vec3(0,1,0) * len * tan(fovy / 2.0);
   // vec3 H = vec3(1,0,0) * aspect * len * tan(fovy / 2.0);
 
-  // vec3 p = ref + ndc.x * H + ndc.y * V;
-
-
+  // vec3 cameraSpacePos = ref + (ndc.x * H) + (ndc.y * V);
 
 	vec4 diffuseColor = gb2;
 
@@ -207,4 +206,9 @@ void main() {
   finalColor += (vec4(gb3.xyz, 0.0f) * 5.0);
 
 	out_Col = finalColor; //vec4(ndc.xy, 0.0, 1.0);
+
+  // out_Col = vec4(cameraSpacePos, 1.0);
+  // out_Col = vec4(gb1.xyz, 1.0);
+  // out_Col = vec4(cameraSpacePos.xyz, 1.0);
+  // out_Col = cameraSpacePos;
 }
