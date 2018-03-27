@@ -14,8 +14,9 @@ vec4 blend(vec4 color1, vec4 color2) {
   // } else {
   //   return 1.0 - 2.0 * (1.0 - color1) * (1.0 - color2);
   // }
-  if (color2.a > 0.0) {
-    return color2 * 0.25 * color2.a;
+
+  if (length(color2.rgb) > 0.1) {
+    return color2;
   }
 
   return color1;
@@ -29,9 +30,13 @@ void main() {
 
   vec4 finalColor;
 
-  finalColor = blend(baseColor, nearBlurColor);
-  finalColor = blend(finalColor, farBlurColor);
+  finalColor = blend(baseColor, farBlurColor);
+  finalColor = blend(finalColor, nearBlurColor);
 
-  // finalColor = baseColor * 0.8 + nearBlurColor * 0.2 + farBlurColor * 0.2;
+  // finalColor = baseColor + nearBlurColor + farBlurColor;
+
+  // finalColor.rgb = mix(baseColor.rgb, nearBlurColor.rgb, length(nearBlurColor.rgb));
+  // finalColor.a   = mix(1.0, 0.25, length(nearBlurColor.rgb));
+
   out_Col = vec4(finalColor.xyz, 1.0);
 }

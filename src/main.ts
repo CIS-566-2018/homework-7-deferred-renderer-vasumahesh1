@@ -212,8 +212,8 @@ function main() {
   group = gui.addFolder('Depth of Field');
   group.add(controls.dof, 'enabled').name('Enabled').listen();
   group.add(controls.dof, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
-  group.add(controls.dof, 'focalLength', 0, 100.0).step(0.05).name('Focal Length').listen();
-  group.add(controls.dof, 'inFocusPlaneSize', 0, 100.0).step(0.05).name('Focal Plane Size').listen();
+  group.add(controls.dof, 'focalLength', 0, 30.0).step(0.05).name('Focal Length').listen();
+  group.add(controls.dof, 'inFocusPlaneSize', 0, 30.0).step(0.05).name('Focal Plane Size').listen();
 
   group = gui.addFolder('Tonemap');
   group.add(controls.tonemap, 'enabled').name('Enabled').listen();
@@ -272,6 +272,9 @@ function main() {
 
   renderer.deferredShader.setSpotLights(lights);
   renderer.post32Passes[6].setSpotLights(lights);
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   function tick() {
     camera.update();

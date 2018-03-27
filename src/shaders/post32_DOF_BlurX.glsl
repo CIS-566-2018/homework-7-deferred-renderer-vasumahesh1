@@ -11,6 +11,11 @@ const float weight[7] = float[] (0.00598, 0.060626, 0.241843, 0.383103, 0.241843
 
 void main() {
   vec4 baseColor = texture(u_frame, fs_UV);
+
+  if (baseColor.a < 0.01) {
+    out_Col = vec4(0,0,0,0);
+    return;
+  }
   
   float posX = 1.0 / (float(u_Dimensions.x) - 1.0);
   float posY = 1.0 / (float(u_Dimensions.y) - 1.0);
@@ -24,5 +29,7 @@ void main() {
       result += texture(u_frame, fs_UV - vec2(tex_offset.x * float(i), 0.0)).rgb * weight[i];
   }
 
-  out_Col = vec4(result, baseColor.a);
+  out_Col = vec4(result * 0.5, 1.0f);
+
+  // out_Col = vec4(vec3(baseColor.a), 1);
 }

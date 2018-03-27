@@ -4,8 +4,6 @@ precision highp float;
 in vec2 fs_UV;
 out vec4 out_Col;
 
-uniform float u_GodRay_DS;
-
 uniform ivec2 u_Dimensions;
 uniform sampler2D u_frame;
 
@@ -13,6 +11,11 @@ const float weight[7] = float[] (0.00598, 0.060626, 0.241843, 0.383103, 0.241843
 
 void main() {
   vec4 baseColor = texture(u_frame, fs_UV);
+
+  if (baseColor.a < 0.01) {
+    out_Col = vec4(0,0,0,0);
+    return;
+  }
   
   float posX = 1.0 / (float(u_Dimensions.x) - 1.0);
   float posY = 1.0 / (float(u_Dimensions.y) - 1.0);
@@ -26,5 +29,5 @@ void main() {
       result += texture(u_frame, fs_UV - vec2(0.0, tex_offset.y * float(i))).rgb * weight[i];
   }
 
-  out_Col = vec4(result, baseColor.a);
+  out_Col = vec4(result * 0.5, 1.0f);
 }

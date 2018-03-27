@@ -18,17 +18,14 @@ vec3 getColor(float x, float y) {
 }
 
 float getDepth(float x, float y) {
-  float posX = x / (float(u_Dimensions.x) - 1.0);
-  float posY = y / (float(u_Dimensions.y) - 1.0);
-
-  vec4 col = texture(u_gb0, vec2(posX, posY));
+  vec4 col = texture(u_gb0, vec2(x, y));
   return col.w;
 }
 
 void main() {
   float cutoffDepth = u_DOF_Options.x - (u_DOF_Options.y / 2.0);
 
-  float depth = getDepth(gl_FragCoord.x, gl_FragCoord.y);
+  float depth = getDepth(fs_UV.x, fs_UV.y);
 
   if (abs(depth) > cutoffDepth) {
     out_Col = vec4(0, 0, 0, 0);
