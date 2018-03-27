@@ -46,12 +46,6 @@ vec4 computeGodRay(vec4 inputColor) {
 
     vec4 lightDirection = u_View * vec4(light.direction, 0.0);
 
-    float val = dot(normalize(lightDirection.xyz), vec3(0,0,1));
-
-    if (val < 0.0) {
-      continue;
-    }
-
     vec4 lightDirectionSS = u_Proj * vec4(lightDirection.xyz, 0.0);
     vec4 lightScreenPos = u_Proj * u_View * vec4(light.position, 1.0);
     lightScreenPos /= lightScreenPos.w; // NDC
