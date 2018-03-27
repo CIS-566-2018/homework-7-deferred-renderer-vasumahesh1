@@ -452,6 +452,7 @@ class OpenGLRenderer {
     activePass.setBloomBlur(1);
     activePass.setGodRay(2);
     activePass.setBloomBlend(params.bloom.blend);
+    activePass.setGodRayBlend(params.godray.blend);
     activePass.draw();
 
     // bind default frame buffer
@@ -459,9 +460,20 @@ class OpenGLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
+  clearBloomBuffer() {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
   renderPass_Bloom(params: any) {
     if (!params.enabled) {
-      return this.renderPass_Copy(0, 2);
+      this.clearBloomBuffer();
+      return;
     }
 
     this.renderPass_Bloom_Extract(params);

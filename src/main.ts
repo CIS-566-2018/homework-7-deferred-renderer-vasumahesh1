@@ -223,6 +223,11 @@ function main() {
   group.add(controls.bloom, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
   group.add(controls.bloom, 'iterations', 1.0, 4.0).step(1.0).name('Iterations').listen();
   group.add(controls.bloom, 'enabled').name('Enabled').listen();
+
+  group = gui.addFolder('God Rays');
+  group.add(controls.godray, 'blend', 0, 1.0).step(0.05).name('GR Blend Amount').listen();
+  group.add(controls.godray, 'iterations', 1.0, 4.0).step(1.0).name('Iterations').listen();
+  group.add(controls.godray, 'enabled').name('Enabled').listen();
   
   group = gui.addFolder('Artistic');
   gui.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } );

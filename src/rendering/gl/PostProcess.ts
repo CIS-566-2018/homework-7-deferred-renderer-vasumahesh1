@@ -29,6 +29,8 @@ class PostProcess extends ShaderProgram {
 	dof_unifFocalLength: WebGLUniformLocation;
 	unifGodRayDS: WebGLUniformLocation;
 
+	gr_unifBlend: WebGLUniformLocation;
+
 	gb_target0: WebGLUniformLocation;
 	gb_target1: WebGLUniformLocation;
 	gb_target2: WebGLUniformLocation;
@@ -58,6 +60,8 @@ class PostProcess extends ShaderProgram {
 		this.dof_unifFocalLength = gl.getUniformLocation(this.prog, "u_DOF_Focal");
 		this.unifGodRayDS = gl.getUniformLocation(this.prog, "u_GodRay_DS");
 
+		this.gr_unifBlend = gl.getUniformLocation(this.prog, "u_GodRay_Blend");
+
 		this.use();
 		this.name = tag;
 
@@ -80,6 +84,13 @@ class PostProcess extends ShaderProgram {
 		this.use();
     if (this.unifGodRayDS !== -1) {
       gl.uniform1f(this.unifGodRayDS, num);
+    }
+	}
+
+	setGodRayBlend(num: number) {
+		this.use();
+    if (this.gr_unifBlend !== -1) {
+      gl.uniform1f(this.gr_unifBlend, num);
     }
 	}
 
