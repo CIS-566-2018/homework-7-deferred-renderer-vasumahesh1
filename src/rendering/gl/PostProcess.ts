@@ -27,6 +27,7 @@ class PostProcess extends ShaderProgram {
 
 	dof_unifBlend: WebGLUniformLocation;
 	dof_unifFocalLength: WebGLUniformLocation;
+	unifGodRayDS: WebGLUniformLocation;
 
 	gb_target0: WebGLUniformLocation;
 	gb_target1: WebGLUniformLocation;
@@ -55,6 +56,7 @@ class PostProcess extends ShaderProgram {
 
 		this.dof_unifBlend = gl.getUniformLocation(this.prog, "u_DOF_Blend");
 		this.dof_unifFocalLength = gl.getUniformLocation(this.prog, "u_DOF_Focal");
+		this.unifGodRayDS = gl.getUniformLocation(this.prog, "u_GodRay_DS");
 
 		this.use();
 		this.name = tag;
@@ -72,6 +74,13 @@ class PostProcess extends ShaderProgram {
 			PostProcess.screenQuad = new Square(vec3.fromValues(0, 0, 0));
 			PostProcess.screenQuad.create();
 		}
+	}
+
+	setGodRayDownsample(num: number) {
+		this.use();
+    if (this.unifGodRayDS !== -1) {
+      gl.uniform1f(this.unifGodRayDS, num);
+    }
 	}
 
 	setPointLights(lights: Array<PointLight>) {

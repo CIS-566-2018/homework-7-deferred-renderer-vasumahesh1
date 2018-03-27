@@ -31,7 +31,7 @@ class OpenGLRenderer {
   post8Passes: PostProcess[];
   post32Passes: PostProcess[];
 
-  downSampleGodRay: number = 8;
+  downSampleGodRay: number = 2.0;
 
   currentTime: number; // timer number to apply to all drawing shaders
 
@@ -447,6 +447,8 @@ class OpenGLRenderer {
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
 
+    activePass.setGodRayDownsample(this.downSampleGodRay);
+
     activePass.setBloomBlur(1);
     activePass.setGodRay(2);
     activePass.setBloomBlend(params.bloom.blend);
@@ -521,14 +523,15 @@ class OpenGLRenderer {
   renderPass_GodRay_Pre(camera: any, params: any) {
     let activePass = this.post32Passes[5];
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[3]);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[3]);
     activePass.setGBufferTarget3(1);
+    activePass.setGodRayDownsample(this.downSampleGodRay);
 
     activePass.setScreenSize(this.canvas.width, this.canvas.height);
     activePass.draw();
@@ -541,8 +544,8 @@ class OpenGLRenderer {
   renderPass_GodRay_Sample(camera: any, params: any) {
     let activePass = this.post32Passes[6];
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[3]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[4]);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -550,12 +553,13 @@ class OpenGLRenderer {
     let proj = camera.projectionMatrix;
     activePass.setViewMatrix(view);
     activePass.setProjMatrix(proj);
+    activePass.setGodRayDownsample(this.downSampleGodRay);
 
     // bind: u_frame
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
 
-    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.setScreenSize(this.canvas.width / this.downSampleGodRay, this.canvas.height / this.downSampleGodRay);
     activePass.draw();
 
     // bind default frame buffer
@@ -566,15 +570,16 @@ class OpenGLRenderer {
   renderPass_GodRay_BlurX(params: any) {
     let activePass = this.post32Passes[7];
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[3]);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[4]);
+    activePass.setGodRayDownsample(this.downSampleGodRay);
 
-    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.setScreenSize(this.canvas.width / this.downSampleGodRay, this.canvas.height / this.downSampleGodRay);
     activePass.draw();
 
     // bind default frame buffer
@@ -585,15 +590,17 @@ class OpenGLRenderer {
   renderPass_GodRay_BlurY(params: any) {
     let activePass = this.post32Passes[8];
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[3]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[4]);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
 
-    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.setGodRayDownsample(this.downSampleGodRay);
+
+    activePass.setScreenSize(this.canvas.width / this.downSampleGodRay, this.canvas.height / this.downSampleGodRay);
     activePass.draw();
 
     // bind default frame buffer
@@ -610,6 +617,13 @@ class OpenGLRenderer {
     this.renderPass_GodRay_Sample(camera, params);
     this.renderPass_GodRay_BlurX(params);
     this.renderPass_GodRay_BlurY(params);
+
+    let count = params.iterations - 1;
+
+    for (var itr = 0; itr < count; ++itr) {
+      this.renderPass_GodRay_BlurX(params);
+      this.renderPass_GodRay_BlurY(params);
+    }
   }
 
   renderPass_Copy(idx1:number, idx2:number) {

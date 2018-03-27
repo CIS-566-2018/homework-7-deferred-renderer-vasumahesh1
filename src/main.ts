@@ -27,7 +27,9 @@ let controls = {
     direction: [15, 15, 15]
   },
   godray: {
-
+    enabled: true,
+    blend: 1.0,
+    iterations: 4
   },
   dof: {
     focalLength: 10,
@@ -285,7 +287,7 @@ function main() {
     // // apply 8-bit post and draw
     // renderer.renderPostProcessLDR();
 
-    // renderer.renderPass_Bloom(controls.bloom);
+    renderer.renderPass_Bloom(controls.bloom);
     renderer.renderPass_GodRay(camera, controls.godray);
     // renderer.renderPass_DOF(camera, controls.dof);
 

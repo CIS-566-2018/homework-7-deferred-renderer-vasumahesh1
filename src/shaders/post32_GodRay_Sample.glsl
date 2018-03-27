@@ -3,9 +3,10 @@ precision highp float;
 
 in vec2 fs_UV;
 out vec4 out_Col;
+uniform float u_GodRay_DS;
 
 #define MAX_SPOT_LIGHTS 20
-#define NUM_SAMPLES 1
+#define NUM_SAMPLES 200
 
 struct SpotLight {
     vec4 ambient;
@@ -34,7 +35,7 @@ uniform vec4 u_CamPos;
 vec4 computeGodRay(vec4 inputColor) {
   vec2 texCoord = fs_UV;
 
-  float density = 0.9;
+  float density = 3.0;
   float weight = 0.25;
   float decay = 0.75;
   float exposure = 0.75;
@@ -50,17 +51,29 @@ vec4 computeGodRay(vec4 inputColor) {
       continue;
     }
 
+    vec4 lightDirectionSS = u_Proj * vec4(lightDirection.xyz, 0.0);
     vec4 lightScreenPos = u_Proj * u_View * vec4(light.position, 1.0);
     lightScreenPos /= lightScreenPos.w; // NDC
+    lightDirectionSS /= lightDirectionSS.w; // NDC
 
     lightScreenPos.x = (lightScreenPos.x + 1.0) * 0.5;
     lightScreenPos.y = (1.0 - lightScreenPos.y) * 0.5; // Pixel Space
+
+    lightDirectionSS.x = (lightDirectionSS.x + 1.0) * 0.5;
+    lightDirectionSS.y = (1.0 - lightDirectionSS.y) * 0.5; // Pixel Space
 
     // if (lightScreenPos.x >= -1.0 && lightScreenPos.x <= 1.0 && lightScreenPos.y >= -1.0 && lightScreenPos.y <= 1.0) {
       // Safe to Process God Ray
       float illuminationDecay = 1.0;
 
       vec2 deltaTexCoord = (texCoord - lightScreenPos.xy);
+
+      // float cosFactor = abs(dot(normalize(lightDirectionSS.xy), normalize(deltaTexCoord)));
+
+      // if (abs(acos(cosFactor)) > 0.05) {
+      //   continue;
+      // }
+
       deltaTexCoord *= 1.0 / float(NUM_SAMPLES) * density;
 
       for (uint j = uint(0); j < uint(NUM_SAMPLES); j++) {

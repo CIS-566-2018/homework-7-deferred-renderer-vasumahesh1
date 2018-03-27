@@ -4,6 +4,8 @@ precision highp float;
 in vec2 fs_UV;
 out vec4 out_Col;
 
+uniform float u_GodRay_DS;
+
 uniform ivec2 u_Dimensions;
 uniform sampler2D u_frame;
 
