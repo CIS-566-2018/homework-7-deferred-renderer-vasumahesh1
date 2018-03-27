@@ -27,6 +27,7 @@ uniform SpotLight u_SpotLights[MAX_SPOT_LIGHTS];
 uniform uint u_NumSpotLights;
 
 uniform sampler2D u_frame;
+uniform sampler2D u_gb0;
 
 uniform mat4 u_View;
 uniform mat4 u_Proj;
@@ -36,6 +37,8 @@ uniform vec4 u_GodRay_Options;
 vec4 computeGodRay(vec4 inputColor) {
   vec2 texCoord = fs_UV;
 
+  // vec4 gbData = texture(u_gb0, texCoord);
+
   float density = u_GodRay_Options.x;
   float weight = u_GodRay_Options.y;
   float decay = u_GodRay_Options.z;
@@ -44,28 +47,42 @@ vec4 computeGodRay(vec4 inputColor) {
   for (uint i = uint(0); i < u_NumSpotLights; i++) {
     SpotLight light = u_SpotLights[i];
 
-    vec4 lightDirection = u_View * vec4(light.direction, 0.0);
+    vec4 p1 = u_Proj * u_View * vec4(0, 0, 0, 1.0);
+    vec4 p2 = u_Proj * u_View * vec4(light.direction, 1.0);
+    p1 /= p1.w; // NDC
+    p2 /= p2.w; // NDC
 
-    vec4 lightDirectionSS = u_Proj * vec4(lightDirection.xyz, 0.0);
+    p1.x = (p1.x + 1.0) * 0.5;
+    p1.y = (p1.y + 1.0) * 0.5; // Pixel Space
+
+    p2.x = (p2.x + 1.0) * 0.5;
+    p2.y = (p2.y + 1.0) * 0.5; // Pixel Space
+
+    vec2 deltaPos = normalize(vec2(p2.xy - p1.xy)); // 
+
     vec4 lightScreenPos = u_Proj * u_View * vec4(light.position, 1.0);
     lightScreenPos /= lightScreenPos.w; // NDC
-    lightDirectionSS /= lightDirectionSS.w; // NDC
 
     lightScreenPos.x = (lightScreenPos.x + 1.0) * 0.5;
-    lightScreenPos.y = (1.0 - lightScreenPos.y) * 0.5; // Pixel Space
-
-    lightDirectionSS.x = (lightDirectionSS.x + 1.0) * 0.5;
-    lightDirectionSS.y = (1.0 - lightDirectionSS.y) * 0.5; // Pixel Space
+    lightScreenPos.y = (lightScreenPos.y + 1.0) * 0.5; // Pixel Space
 
     // if (lightScreenPos.x >= -1.0 && lightScreenPos.x <= 1.0 && lightScreenPos.y >= -1.0 && lightScreenPos.y <= 1.0) {
       // Safe to Process God Ray
       float illuminationDecay = 1.0;
 
-      vec2 deltaTexCoord = (texCoord - lightScreenPos.xy);
+      vec2 lightToCoord = texCoord - lightScreenPos.xy;
+      vec2 deltaTexCoord = deltaPos;
 
-      // float cosFactor = abs(dot(normalize(lightDirectionSS.xy), normalize(deltaTexCoord)));
+      // deltaTexCoord = lightToCoord;
 
-      // if (abs(acos(cosFactor)) > 0.05) {
+      if (length(lightToCoord) > 0.1) {
+        continue;
+      }
+
+      float cosFactor = acos(dot(normalize(lightToCoord), deltaTexCoord));
+
+      // 25 degree search limit
+      // if (abs(cosFactor) > 0.436332) {
       //   continue;
       // }
 

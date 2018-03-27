@@ -31,7 +31,7 @@ class OpenGLRenderer {
   post8Passes: PostProcess[];
   post32Passes: PostProcess[];
 
-  downSampleGodRay: number = 2.0;
+  downSampleGodRay: number = 1.0;
   downSampleBloom: number = 2.0;
 
   currentTime: number; // timer number to apply to all drawing shaders
@@ -464,7 +464,7 @@ class OpenGLRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
 
     gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[4]);
 
     activePass.setGodRayDownsample(this.downSampleGodRay);
     activePass.setBloomDownsample(this.downSampleBloom);
@@ -701,6 +701,10 @@ class OpenGLRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
 
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[0]);
+    activePass.setGBufferTarget0(1);
+
     activePass.setScreenSize(this.canvas.width / this.downSampleGodRay, this.canvas.height / this.downSampleGodRay);
     activePass.draw();
 
@@ -750,10 +754,21 @@ class OpenGLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
+  clearGodRayBuffer() {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[4]);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
   renderPass_GodRay(camera: any, params: any) {
-    // if (!params.enabled) {
-    //   return this.renderPass_Copy(0, 2);
-    // }
+    if (!params.enabled) {
+      this.clearGodRayBuffer();
+      return;
+    }
 
     this.renderPass_GodRay_Pre(camera, params);
     this.renderPass_GodRay_Sample(camera, params);

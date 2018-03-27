@@ -5,7 +5,7 @@ class Camera {
   controls: any;
   projectionMatrix: mat4 = mat4.create();
   viewMatrix: mat4 = mat4.create();
-  fovy: number = 45 * 3.1415962 / 180.0;
+  fovy: number = 45.0 * 3.1415962 / 180.0;
   aspectRatio: number = 1;
   near: number = 0.1;
   far: number = 100;

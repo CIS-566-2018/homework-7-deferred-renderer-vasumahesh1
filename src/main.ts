@@ -1,4 +1,4 @@
-import {vec3, vec4} from 'gl-matrix';
+import {vec2, vec3, vec4, mat4} from 'gl-matrix';
 import * as Stats from 'stats-js';
 import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
@@ -30,13 +30,13 @@ let controls = {
     enabled: true,
     blend: 1.0,
     iterations: 4,
-    density: 3.0,
+    density: 1.0,
     weight: 0.75,
     decay: 0.75,
     exposure: 1.0
   },
   dof: {
-    enabled: true,
+    enabled: false,
     focalLength: 20,
     inFocusPlaneSize: 15,
     blend: 1.0
@@ -45,7 +45,7 @@ let controls = {
     enabled: true
   },
   bloom: {
-    enabled: true,
+    enabled: false,
     blend: 1.0,
     iterations: 1
   },
@@ -137,7 +137,33 @@ function createLights() {
   targetSpotLight.kSpot = 16;
   targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
 
-  lights.push(targetSpotLight);
+  // lights.push(targetSpotLight);
+}
+
+function testUV(camera: Camera) {
+  let light = lights[0];
+  let p1 = vec4.fromValues(0, 0, 0, 1.0);
+  let p2 = vec4.fromValues(light.direction[0], light.direction[1], light.direction[2], 1.0);
+
+  let viewProj = mat4.create();
+  mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
+
+  vec4.transformMat4(p1, p1, viewProj);
+  vec4.transformMat4(p2, p2, viewProj);
+
+  vec4.scale(p1, p1, 1.0 / p1[3]);
+  vec4.scale(p2, p2, 1.0 / p2[3]);
+
+  p1[0] = (p1[0] + 1.0) * 0.5;
+  p2[0] = (p2[0] + 1.0) * 0.5;
+
+  p1[1] = (1.0 - p1[1]) * 0.5;
+  p2[1] = (1.0 - p2[1]) * 0.5;
+
+  let dir = vec2.fromValues(p2[0] - p1[0], p2[1] - p1[1]);
+  // vec2.normalize(dir, dir);
+
+  console.log('Light Direction in UV Space is: ', dir[0], dir[1]);
 }
 
 function loadScene() {
@@ -236,7 +262,7 @@ function main() {
   group.add(controls.godray, 'blend', 0, 1.0).step(0.05).name('GR Blend Amount').listen();
   group.add(controls.godray, 'iterations', 1.0, 10.0).step(1.0).name('Iterations').listen();
   group.add(controls.godray, 'enabled').name('Enabled').listen();
-  group.add(controls.godray, 'density', 0.0, 10.0).step(0.25).name('Density').listen();
+  group.add(controls.godray, 'density', 0.0, 4.0).step(0.05).name('Density').listen();
   group.add(controls.godray, 'weight', 0.0, 10.0).step(0.25).name('Weight').listen();
   group.add(controls.godray, 'decay', 0.0, 1.0).step(0.05).name('Decay').listen();
   group.add(controls.godray, 'exposure', 0.0, 10.0).step(0.25).name('Exposure').listen();
@@ -285,6 +311,7 @@ function main() {
 
     // standardDeferred.bindTexToUnit("tex_Color", tex0, 0);
 
+    testUV(camera);
 
     let lightDirection = controls.skyLight.direction;
     let skyColor = controls.skyLight.color;
