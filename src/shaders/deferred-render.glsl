@@ -90,7 +90,7 @@ vec4 calculateSpotLightContribution(vec4 inputColor, vec3 normal, vec3 fragPosit
     lightVec /= d; 
   
     // Ambient term.
-    ambient = light.ambient;  // TODO: Material
+    // ambient = light.ambient;  // TODO: Material
 
     // Add diffuse and specular term, provided the surface is in 
     // the line of site of the light.
@@ -117,6 +117,8 @@ vec4 calculateSpotLightContribution(vec4 inputColor, vec3 normal, vec3 fragPosit
 
     totalLightContrib += light.contrib * (diffuse + spec) + ambient;
   }
+
+  totalLightContrib += vec4(0.1, 0.1, 0.1, 0);
 
   inputColor = inputColor * totalLightContrib;
 

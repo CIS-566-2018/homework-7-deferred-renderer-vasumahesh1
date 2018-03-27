@@ -136,8 +136,177 @@ function createLights() {
   vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
   targetSpotLight.kSpot = 16;
   targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
 
-  // lights.push(targetSpotLight);
+  // Car 2
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(9.6, -0.5, 1.3);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(9.6, -0.5, 2.6);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
+
+  // Car 3
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(-6, -0.5, 1.3);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(-6, -0.5, 2.6);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
+
+  // Car 4
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(15.1, -0.34, -2.5);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(15.1, -0.34, -1.3);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
+
+  // Car 5
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(-11.5, -0.34, -2.5);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(-11.5, -0.34, -1.3);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
+
+  // Car 6
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(-17.5, -0.34, -2.5);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(-17.5, -0.34, -1.3);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
 }
 
 function testUV(camera: Camera) {

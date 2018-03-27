@@ -75,11 +75,16 @@ vec4 computeGodRay(vec4 inputColor) {
 
       // deltaTexCoord = lightToCoord;
 
-      if (length(lightToCoord) > 0.1) {
+      if (length(lightToCoord) > 0.075) {
         continue;
       }
 
-      float cosFactor = acos(dot(normalize(lightToCoord), deltaTexCoord));
+      float dotValue = dot(normalize(lightToCoord), deltaTexCoord);
+      float cosFactor = acos(dotValue);
+
+      if (dotValue < 0.0) {
+        continue;
+      }
 
       // 25 degree search limit
       // if (abs(cosFactor) > 0.436332) {
