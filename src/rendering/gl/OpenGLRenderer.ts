@@ -32,6 +32,7 @@ class OpenGLRenderer {
   post32Passes: PostProcess[];
 
   downSampleGodRay: number = 2.0;
+  downSampleBloom: number = 2.0;
 
   currentTime: number; // timer number to apply to all drawing shaders
 
@@ -59,12 +60,12 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
     this.currentTime = 0.0;
     this.gbTargets = [undefined, undefined, undefined, undefined];
-    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined];
-    this.post8Targets = [undefined, undefined, undefined, undefined, undefined];
+    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post8Targets = [undefined, undefined, undefined, undefined, undefined, undefined];
     this.post8Passes = [];
 
-    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined];
-    this.post32Targets = [undefined, undefined, undefined, undefined, undefined];
+    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post32Targets = [undefined, undefined, undefined, undefined, undefined, undefined];
     this.post32Passes = [];
 
     // TODO: these are placeholder post shaders, replace them with something good
@@ -192,6 +193,15 @@ class OpenGLRenderer {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth / this.downSampleGodRay, gl.drawingBufferHeight / this.downSampleGodRay, 0, gl.RGBA, gl.FLOAT, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
+      } else if (i == 5 || i == 1) {
+        this.post32Targets[i] = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[i]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth / this.downSampleBloom, gl.drawingBufferHeight / this.downSampleBloom, 0, gl.RGBA, gl.FLOAT, null);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
       } else{
         this.post32Targets[i] = gl.createTexture();
@@ -378,13 +388,14 @@ class OpenGLRenderer {
     let activePass = this.post32Passes[1];
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleBloom, gl.drawingBufferHeight / this.downSampleBloom);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[0]);
 
+    activePass.setBloomDownsample(this.downSampleBloom);
     activePass.draw();
 
     // bind default frame buffer
@@ -395,15 +406,16 @@ class OpenGLRenderer {
   renderPass_Bloom_BlurX(params: any) {
     let activePass = this.post32Passes[2];
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[2]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[5]);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleBloom, gl.drawingBufferHeight / this.downSampleBloom);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[1]);
 
-    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.setBloomDownsample(this.downSampleBloom);
+    activePass.setScreenSize(this.canvas.width / this.downSampleBloom, this.canvas.height / this.downSampleBloom);
     activePass.draw();
 
     // bind default frame buffer
@@ -415,14 +427,15 @@ class OpenGLRenderer {
     let activePass = this.post32Passes[3];
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleBloom, gl.drawingBufferHeight / this.downSampleBloom);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[5]);
 
-    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.setBloomDownsample(this.downSampleBloom);
+    activePass.setScreenSize(this.canvas.width / this.downSampleBloom, this.canvas.height / this.downSampleBloom);
     activePass.draw();
 
     // bind default frame buffer
@@ -448,6 +461,7 @@ class OpenGLRenderer {
     gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[3]);
 
     activePass.setGodRayDownsample(this.downSampleGodRay);
+    activePass.setBloomDownsample(this.downSampleBloom);
 
     activePass.setBloomBlur(1);
     activePass.setGodRay(2);
@@ -462,7 +476,7 @@ class OpenGLRenderer {
 
   clearBloomBuffer() {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.viewport(0, 0, gl.drawingBufferWidth / this.downSampleBloom, gl.drawingBufferHeight / this.downSampleBloom);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -566,6 +580,7 @@ class OpenGLRenderer {
     activePass.setViewMatrix(view);
     activePass.setProjMatrix(proj);
     activePass.setGodRayDownsample(this.downSampleGodRay);
+    activePass.setGodRaySampleOptions(params);
 
     // bind: u_frame
     gl.activeTexture(gl.TEXTURE0);

@@ -31,14 +31,15 @@ uniform sampler2D u_frame;
 uniform mat4 u_View;
 uniform mat4 u_Proj;
 uniform vec4 u_CamPos;
+uniform vec4 u_GodRay_Options;
 
 vec4 computeGodRay(vec4 inputColor) {
   vec2 texCoord = fs_UV;
 
-  float density = 3.0;
-  float weight = 0.25;
-  float decay = 0.75;
-  float exposure = 0.75;
+  float density = u_GodRay_Options.x;
+  float weight = u_GodRay_Options.y;
+  float decay = u_GodRay_Options.z;
+  float exposure = u_GodRay_Options.w;
 
   for (uint i = uint(0); i < u_NumSpotLights; i++) {
     SpotLight light = u_SpotLights[i];

@@ -28,8 +28,10 @@ class PostProcess extends ShaderProgram {
 	dof_unifBlend: WebGLUniformLocation;
 	dof_unifFocalLength: WebGLUniformLocation;
 	unifGodRayDS: WebGLUniformLocation;
+	unifBloomDS: WebGLUniformLocation;
 
 	gr_unifBlend: WebGLUniformLocation;
+	gr_unifOptions: WebGLUniformLocation;
 
 	gb_target0: WebGLUniformLocation;
 	gb_target1: WebGLUniformLocation;
@@ -59,8 +61,10 @@ class PostProcess extends ShaderProgram {
 		this.dof_unifBlend = gl.getUniformLocation(this.prog, "u_DOF_Blend");
 		this.dof_unifFocalLength = gl.getUniformLocation(this.prog, "u_DOF_Focal");
 		this.unifGodRayDS = gl.getUniformLocation(this.prog, "u_GodRay_DS");
+		this.unifBloomDS = gl.getUniformLocation(this.prog, "u_Bloom_DS");
 
 		this.gr_unifBlend = gl.getUniformLocation(this.prog, "u_GodRay_Blend");
+		this.gr_unifOptions = gl.getUniformLocation(this.prog, "u_GodRay_Options");
 
 		this.use();
 		this.name = tag;
@@ -84,6 +88,23 @@ class PostProcess extends ShaderProgram {
 		this.use();
     if (this.unifGodRayDS !== -1) {
       gl.uniform1f(this.unifGodRayDS, num);
+    }
+	}
+
+	setGodRaySampleOptions(params: any) {
+		this.use();
+
+		let grOpts = vec4.fromValues(params.density, params.weight, params.decay, params.exposure);
+
+		if (this.gr_unifOptions !== -1) {
+      gl.uniform4fv(this.gr_unifOptions, grOpts);
+    }
+	}
+
+	setBloomDownsample(num: number) {
+		this.use();
+    if (this.unifBloomDS !== -1) {
+      gl.uniform1f(this.unifBloomDS, num);
     }
 	}
 

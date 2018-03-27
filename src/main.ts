@@ -29,7 +29,11 @@ let controls = {
   godray: {
     enabled: true,
     blend: 1.0,
-    iterations: 4
+    iterations: 4,
+    density: 3.0,
+    weight: 0.75,
+    decay: 0.75,
+    exposure: 1.0
   },
   dof: {
     focalLength: 10,
@@ -221,13 +225,17 @@ function main() {
 
   group = gui.addFolder('Bloom');
   group.add(controls.bloom, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
-  group.add(controls.bloom, 'iterations', 1.0, 4.0).step(1.0).name('Iterations').listen();
+  group.add(controls.bloom, 'iterations', 1.0, 10.0).step(1.0).name('Iterations').listen();
   group.add(controls.bloom, 'enabled').name('Enabled').listen();
 
   group = gui.addFolder('God Rays');
   group.add(controls.godray, 'blend', 0, 1.0).step(0.05).name('GR Blend Amount').listen();
-  group.add(controls.godray, 'iterations', 1.0, 4.0).step(1.0).name('Iterations').listen();
+  group.add(controls.godray, 'iterations', 1.0, 10.0).step(1.0).name('Iterations').listen();
   group.add(controls.godray, 'enabled').name('Enabled').listen();
+  group.add(controls.godray, 'density', 0.0, 10.0).step(0.25).name('Density').listen();
+  group.add(controls.godray, 'weight', 0.0, 10.0).step(0.25).name('Weight').listen();
+  group.add(controls.godray, 'decay', 0.0, 1.0).step(0.05).name('Decay').listen();
+  group.add(controls.godray, 'exposure', 0.0, 10.0).step(0.25).name('Exposure').listen();
   
   group = gui.addFolder('Artistic');
   gui.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } );
