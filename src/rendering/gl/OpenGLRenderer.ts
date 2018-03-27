@@ -60,12 +60,12 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
     this.currentTime = 0.0;
     this.gbTargets = [undefined, undefined, undefined, undefined];
-    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined, undefined];
-    this.post8Targets = [undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post8Targets = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
     this.post8Passes = [];
 
-    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined, undefined];
-    this.post32Targets = [undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post32Targets = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
     this.post32Passes = [];
 
     // TODO: these are placeholder post shaders, replace them with something good
@@ -84,6 +84,12 @@ class OpenGLRenderer {
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_Sample.glsl')))); // 6 // Extract High Luminance Pixels
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_BlurX.glsl')))); // 7 // Extract High Luminance Pixels
     this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_GodRay_BlurY.glsl')))); // 8 // Extract High Luminance Pixels
+
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF_NearPass.glsl')))); // 9
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF_FarPass.glsl')))); // 10
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF_BlurX.glsl')))); // 11
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF_BlurY.glsl')))); // 12
+    this.add32BitPass(new PostProcess(new Shader(gl.FRAGMENT_SHADER, require('../../shaders/post32_DOF_Composite.glsl')))); // 13
 
     if (!gl.getExtension("OES_texture_float_linear")) {
       console.error("OES_texture_float_linear not available");
@@ -502,16 +508,16 @@ class OpenGLRenderer {
     }
   }
 
-  renderPass_DOF(camera: Camera, params: any) {
-    let activePass = this.post32Passes[0];
+  renderPass_DOF_NearPass(camera: Camera, params: any) {
+    let activePass = this.post32Passes[9];
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[1]);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[6]);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[0]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[0]);
@@ -526,6 +532,115 @@ class OpenGLRenderer {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
+  renderPass_DOF_FarPass(camera: Camera, params: any) {
+    let activePass = this.post32Passes[10];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[8]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[0]);
+
+    activePass.setPassParams_DOF(params);
+    activePass.setGBufferTarget0(1);
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_DOF_BlurX(camera: Camera, params: any, num: number, target: number) {
+    let activePass = this.post32Passes[11];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[target]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[num]);
+
+    activePass.setPassParams_DOF(params);
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_DOF_BlurY(camera: Camera, params: any, num: number, target: number) {
+    let activePass = this.post32Passes[12];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[target]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[num]);
+
+    activePass.setPassParams_DOF(params);
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_DOF_Composite(camera: Camera, params: any) {
+    let activePass = this.post32Passes[13];
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[7]);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[6]);
+
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[8]);
+
+    activePass.setPassParams_DOF(params);
+    activePass.setGBufferTarget0(1);
+    activePass.setGBufferTarget1(2);
+    activePass.setScreenSize(this.canvas.width, this.canvas.height);
+    activePass.draw();
+
+    // bind default frame buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  }
+
+  renderPass_DOF(camera: Camera, params: any) {
+    if (!params.enabled) {
+      this.renderPass_Copy(2, 7);
+      return;
+    }
+
+    this.renderPass_DOF_NearPass(camera, params);
+    this.renderPass_DOF_BlurX(camera, params, 6, 7);
+    this.renderPass_DOF_BlurY(camera, params, 7, 6);
+
+    this.renderPass_DOF_FarPass(camera, params);
+    this.renderPass_DOF_BlurX(camera, params, 8, 7);
+    this.renderPass_DOF_BlurY(camera, params, 7, 8);
+
+    this.renderPass_DOF_Composite(camera, params);
+  }
+
   renderPass_ToneMapping(config: any)
   {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post8Buffers[0]);
@@ -537,7 +652,7 @@ class OpenGLRenderer {
 
     gl.activeTexture(gl.TEXTURE0);
     // bound texture is the last one processed before
-    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[2]);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[7]); // TODO: 7
 
     let val = config.enabled ? 1 : 0;
     this.tonemapPass.setToneMapping(val);

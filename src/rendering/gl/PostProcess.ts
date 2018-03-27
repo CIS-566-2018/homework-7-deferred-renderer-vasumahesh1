@@ -26,7 +26,7 @@ class PostProcess extends ShaderProgram {
 	unifGodRay: WebGLUniformLocation;
 
 	dof_unifBlend: WebGLUniformLocation;
-	dof_unifFocalLength: WebGLUniformLocation;
+	dof_params: WebGLUniformLocation;
 	unifGodRayDS: WebGLUniformLocation;
 	unifBloomDS: WebGLUniformLocation;
 
@@ -59,7 +59,7 @@ class PostProcess extends ShaderProgram {
 		this.gb_target3 = gl.getUniformLocation(this.prog, "u_gb3");
 
 		this.dof_unifBlend = gl.getUniformLocation(this.prog, "u_DOF_Blend");
-		this.dof_unifFocalLength = gl.getUniformLocation(this.prog, "u_DOF_Focal");
+		this.dof_params = gl.getUniformLocation(this.prog, "u_DOF_Options");
 		this.unifGodRayDS = gl.getUniformLocation(this.prog, "u_GodRay_DS");
 		this.unifBloomDS = gl.getUniformLocation(this.prog, "u_Bloom_DS");
 
@@ -112,6 +112,13 @@ class PostProcess extends ShaderProgram {
 		this.use();
     if (this.gr_unifBlend !== -1) {
       gl.uniform1f(this.gr_unifBlend, num);
+    }
+	}
+
+	setDOFBlend(num: number) {
+		this.use();
+    if (this.dof_unifBlend !== -1) {
+      gl.uniform1f(this.dof_unifBlend, num);
     }
 	}
 
@@ -220,12 +227,9 @@ class PostProcess extends ShaderProgram {
 
   setPassParams_DOF(params: any) {
   	this.use();
-    if (this.dof_unifBlend !== -1) {
-      gl.uniform1f(this.dof_unifBlend, params.blend);
-    }
 
-    if (this.dof_unifFocalLength !== -1) {
-      gl.uniform1f(this.dof_unifFocalLength, params.focalLength);
+    if (this.dof_params !== -1) {
+      gl.uniform2f(this.dof_params, params.focalLength, params.inFocusPlaneSize);
     }
   }
 

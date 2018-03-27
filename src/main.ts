@@ -36,7 +36,9 @@ let controls = {
     exposure: 1.0
   },
   dof: {
-    focalLength: 10,
+    enabled: true,
+    focalLength: 20,
+    inFocusPlaneSize: 15,
     blend: 1.0
   },
   tonemap: {
@@ -208,8 +210,10 @@ function main() {
   var group;
 
   group = gui.addFolder('Depth of Field');
+  group.add(controls.dof, 'enabled').name('Enabled').listen();
   group.add(controls.dof, 'blend', 0, 1.0).step(0.05).name('Blend Amount').listen();
-  group.add(controls.dof, 'focalLength', 0, 100.0).step(0.5).name('Focal Length').listen();
+  group.add(controls.dof, 'focalLength', 0, 100.0).step(0.05).name('Focal Length').listen();
+  group.add(controls.dof, 'inFocusPlaneSize', 0, 100.0).step(0.05).name('Focal Plane Size').listen();
 
   group = gui.addFolder('Tonemap');
   group.add(controls.tonemap, 'enabled').name('Enabled').listen();
@@ -302,9 +306,10 @@ function main() {
 
     renderer.renderPass_Bloom(controls.bloom);
     renderer.renderPass_GodRay(camera, controls.godray);
-    // renderer.renderPass_DOF(camera, controls.dof);
 
     renderer.renderPass_Composite(controls);
+
+    renderer.renderPass_DOF(camera, controls.dof);
 
     renderer.renderPass_ToneMapping(controls.tonemap);
     
