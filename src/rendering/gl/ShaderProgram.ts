@@ -37,6 +37,9 @@ class ShaderProgram {
 
   unifTexUnits: Map<string, WebGLUniformLocation>;
 
+  unifSMLightSpace: WebGLUniformLocation;
+  unifSMLightViewport: WebGLUniformLocation;
+
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
 
@@ -60,7 +63,21 @@ class ShaderProgram {
     this.unifColor = gl.getUniformLocation(this.prog, "u_Color");
     this.unifTime = gl.getUniformLocation(this.prog, "u_Time");
 
+    this.unifSMLightSpace = gl.getUniformLocation(this.prog, "u_LightSpaceMatrix");
+    this.unifSMLightViewport = gl.getUniformLocation(this.prog, "u_LightViewportMatrix");
+
     this.unifTexUnits = new Map<string, WebGLUniformLocation>();
+  }
+
+  setShadowMapMatrices(lightSpace: mat4, lightViewport: mat4) {
+    this.use();
+    if (this.unifSMLightSpace !== -1) {
+      gl.uniformMatrix4fv(this.unifSMLightSpace, false, lightSpace);
+    }
+
+    if (this.unifSMLightViewport !== -1) {
+      gl.uniformMatrix4fv(this.unifSMLightViewport, false, lightViewport);
+    }
   }
 
   setupTexUnits(handleNames: Array<string>) {

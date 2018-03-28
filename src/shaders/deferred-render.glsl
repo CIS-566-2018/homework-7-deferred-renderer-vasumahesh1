@@ -11,6 +11,7 @@ uniform sampler2D u_gb0;
 uniform sampler2D u_gb1;
 uniform sampler2D u_gb2;
 uniform sampler2D u_gb3;
+uniform sampler2D u_sm;
 
 uniform float u_Time;
 
@@ -20,6 +21,8 @@ uniform ivec2 u_Dimensions;
 
 uniform mat4 u_View;
 uniform mat4 u_Proj;
+uniform mat4 u_LightSpaceMatrix;
+uniform mat4 u_LightViewportMatrix;
 uniform vec4 u_CamPos;
 
 #define MAX_POINT_LIGHTS 20
@@ -207,6 +210,16 @@ void main() {
   // finalColor = calculateSpotLightContribution(finalColor, normal, cameraSpacePos.xyz);
 
   finalColor += (vec4(gb3.xyz, 0.0f) * 5.0);
+
+  vec4 worldPos = inverse(u_View) * vec4(gb1.xyz, 1.0f);
+
+  vec4 lightSpace = u_LightSpaceMatrix * worldPos;
+  float shadowDepth = texture(u_sm, vec2((lightSpace.x + 1.0) * 0.5, (lightSpace.y + 1.0) * 0.5)).z;
+
+  float bias = 0.005;
+  if (shadowDepth < lightSpace.z  - bias) {
+      finalColor = vec4(finalColor.xyz * 0.5, finalColor.a);
+  }
 
 	out_Col = finalColor; //vec4(ndc.xy, 0.0, 1.0);
 

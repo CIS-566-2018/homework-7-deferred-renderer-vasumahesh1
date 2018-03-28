@@ -34,6 +34,9 @@ class OpenGLRenderer {
   downSampleGodRay: number = 1.0;
   downSampleBloom: number = 1.0;
 
+  shadowMapSize: number = 4096.0;
+  shadowTexture: WebGLTexture;
+
   currentTime: number; // timer number to apply to all drawing shaders
 
   // the shader that renders from the gbuffers into the postbuffers
@@ -60,12 +63,12 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
     this.currentTime = 0.0;
     this.gbTargets = [undefined, undefined, undefined, undefined];
-    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
-    this.post8Targets = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post8Buffers = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post8Targets = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
     this.post8Passes = [];
 
-    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
-    this.post32Targets = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post32Buffers = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+    this.post32Targets = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
     this.post32Passes = [];
 
     // TODO: these are placeholder post shaders, replace them with something good
@@ -103,12 +106,14 @@ class OpenGLRenderer {
     var gb1loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb1");
     var gb2loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb2");
     var gb3loc = gl.getUniformLocation(this.deferredShader.prog, "u_gb3");
+    var smloc = gl.getUniformLocation(this.deferredShader.prog, "u_sm");
 
     this.deferredShader.use();
     gl.uniform1i(gb0loc, 0);
     gl.uniform1i(gb1loc, 1);
     gl.uniform1i(gb2loc, 2);
     gl.uniform1i(gb3loc, 3);
+    gl.uniform1i(smloc, 4);
   }
 
 
@@ -209,6 +214,29 @@ class OpenGLRenderer {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.drawingBufferWidth / this.downSampleBloom, gl.drawingBufferHeight / this.downSampleBloom, 0, gl.RGBA, gl.FLOAT, null);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
+      } else if (i == 9) {
+        this.post32Targets[i] = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[i]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this.shadowMapSize, this.shadowMapSize, 0, gl.RGBA, gl.FLOAT, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.post32Targets[i], 0);
+
+         // Shadow Texture Depth Attachment
+         // This is super needed because it tells OpenGL that we need Depth Sorting with this frame buffer that we are using.
+         // Shadow Mapping has it's own framebuffer like any other post32 process, but it needs depth sorting too for the geometry vertices which will be
+         // sorted by the light.
+         this.shadowTexture = gl.createTexture();
+         gl.bindTexture(gl.TEXTURE_2D, this.shadowTexture);
+         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+         gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT32F, this.shadowMapSize, this.shadowMapSize, 0, gl.DEPTH_COMPONENT, gl.FLOAT, null);
+         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.shadowTexture, 0);
       } else{
         this.post32Targets[i] = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[i]);
@@ -284,6 +312,32 @@ class OpenGLRenderer {
 
   }
 
+  renderToShadowMap(camera: Camera, gbProg: ShaderProgram, drawables: Array<Drawable>, textures: Array<Array<any>>) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[9]);
+    gl.viewport(0, 0, this.shadowMapSize, this.shadowMapSize);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+
+    let model = mat4.create();
+    let viewProj = mat4.create();
+    let view = camera.viewMatrix;
+    let proj = camera.projectionMatrix;
+
+    mat4.identity(model);
+    mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
+    gbProg.setModelMatrix(model);
+    gbProg.setViewProjMatrix(viewProj);
+    gbProg.setViewMatrix(view);
+    gbProg.setProjMatrix(proj);
+
+    for (let idx in drawables) {
+      gbProg.draw(drawables[idx]);
+    }
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  }
+
   renderFromGBuffer(camera: Camera) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[0]);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -302,6 +356,9 @@ class OpenGLRenderer {
       gl.activeTexture(gl.TEXTURE0 + i);
       gl.bindTexture(gl.TEXTURE_2D, this.gbTargets[i]);
     }
+
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, this.post32Targets[9]);
 
     this.deferredShader.draw();
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);

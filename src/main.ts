@@ -1,4 +1,4 @@
-import {vec2, vec3, vec4, mat4} from 'gl-matrix';
+import {vec2, vec3, vec4, mat4, glMatrix} from 'gl-matrix';
 import * as Stats from 'stats-js';
 import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
@@ -19,10 +19,16 @@ import SpotLight from './lights/SpotLight';
 let square: Square;
 let shouldCapture: boolean = false;
 
+const SM_VIEWPORT_TRANSFORM:mat4 = mat4.fromValues(
+  0.5, 0.0, 0.0, 0.0,
+  0.0, 0.5, 0.0, 0.0,
+  0.0, 0.0, 0.5, 0.0,
+  0.5, 0.5, 0.5, 1.0);
+
 let controls = {
   saveImage: saveImage,
   skyLight: {
-    color: [255, 255, 255],
+    color: [26, 29, 64],
     intensity: 4,
     direction: [15, 15, 15]
   },
@@ -422,6 +428,32 @@ function downloadImage() {
   }, 'image/png');
 }
 
+function setShadowMapData(shader: any, shader2: any) {
+  let lightDir = controls.skyLight.direction;
+  let lightDirection =  vec3.fromValues(lightDir[0], lightDir[1], lightDir[2]);
+
+  let lightSpaceOrthoProj = mat4.create();
+  mat4.ortho(lightSpaceOrthoProj, -75.0, 75.0, -75.0, 75.0, -100, 1000.0);
+
+  let lightSpaceView = mat4.create();
+  mat4.lookAt(lightSpaceView, lightDirection, vec3.fromValues(0, 0, 0), vec3.fromValues(0, 1, 0));
+  let lightSpaceModel = mat4.create();
+  let lightSpaceViewProj = mat4.create();
+
+  mat4.multiply(lightSpaceViewProj, lightSpaceOrthoProj, lightSpaceView);
+
+  // Convert Model Space -> Light Space Matrix (outputs NDC) to output texCoords between 0 & 1
+  let lightSpaceToViewport = mat4.create();
+  mat4.multiply(lightSpaceToViewport, SM_VIEWPORT_TRANSFORM, lightSpaceViewProj);
+
+  shader.setShadowMapMatrices(lightSpaceViewProj, lightSpaceToViewport);
+  shader2.setShadowMapMatrices(lightSpaceViewProj, lightSpaceToViewport);
+
+  // let t = vec4.fromValues(25,25,20,1);
+  // vec4.transformMat4(t, t, lightSpaceViewProj);
+  // console.log(t);
+}
+
 
 function main() {
   // Initial display for framerate
@@ -471,7 +503,7 @@ function main() {
   group.add(controls.godray, 'exposure', 0.0, 10.0).step(0.25).name('Exposure').listen();
   
   group = gui.addFolder('Artistic');
-  gui.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } );
+  group.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } );
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -497,7 +529,13 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/standard-frag.glsl')),
     ]);
 
+  const standardShadowMap = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/sm-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/sm-frag.glsl')),
+    ]);
+
   standardDeferred.setupTexUnits(["tex_Color", "emi_Color"]);
+  standardShadowMap.setupTexUnits(["tex_Color", "emi_Color"]);
 
   renderer.deferredShader.setSpotLights(lights);
   renderer.post32Passes[6].setSpotLights(lights);
@@ -520,6 +558,7 @@ function main() {
     let skyColor = controls.skyLight.color;
     let intensity = controls.skyLight.intensity;
 
+    setShadowMapData(standardShadowMap, renderer.deferredShader);
     renderer.deferredShader.setLightPosition(vec3.fromValues(lightDirection[0], lightDirection[1], lightDirection[2]));
     renderer.deferredShader.setLightColor(vec3.fromValues(skyColor[0] * intensity / 255, skyColor[1] * intensity / 255, skyColor[2] * intensity / 255));
 
@@ -530,6 +569,7 @@ function main() {
     // forward render mesh info into gbuffers
     // renderer.renderToGBuffer(camera, standardDeferred, [mesh0, mesh1, mesh2]);
     renderer.renderToGBuffer(camera, standardDeferred, sceneMeshes, sceneTextures);
+    renderer.renderToShadowMap(camera, standardShadowMap, sceneMeshes, sceneTextures);
     // render from gbuffers into 32-bit color buffer
     renderer.renderFromGBuffer(camera);
     // apply 32-bit post and tonemap from 32-bit color to 8-bit color
