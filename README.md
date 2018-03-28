@@ -8,7 +8,7 @@ I rendered a low poly highway scene. Inspired by many low poly games! I decided 
 
 ## Controls
 
-![](images/controls.png)
+![](images/controls.PNG)
 
 Almost everything is toggleable. Except for Shadow Maps. You can adjust the blending amount for each effect which affects the final Composition into the frame buffer. Use `Toggle Sky Color` if the Scene is too dark for you.
 
