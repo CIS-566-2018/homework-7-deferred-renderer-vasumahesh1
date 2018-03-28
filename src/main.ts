@@ -84,19 +84,19 @@ let tex0: Texture;
 let lights: Array<SpotLight> = [];
 
 let meshes: Array<string> = [
-  '../resources/obj/car_1.obj',
-  '../resources/obj/car_2.obj',
-  '../resources/obj/car_3.obj',
-  '../resources/obj/bus.obj',
-  '../resources/obj/road.obj'
+  './resources/obj/car_1.obj',
+  './resources/obj/car_2.obj',
+  './resources/obj/car_3.obj',
+  './resources/obj/bus.obj',
+  './resources/obj/road.obj'
 ];
 
 let textures: any = [
-  ['../resources/textures/car_1.png', '../resources/textures/car_1_emissive.png'],
-  ['../resources/textures/car_2.png', '../resources/textures/car_2_emissive.png'],
-  ['../resources/textures/car_3.png', '../resources/textures/car_2_emissive.png'],
-  ['../resources/textures/bus.png', '../resources/textures/bus_emissive.png'],
-  ['../resources/textures/road.png', '../resources/textures/default_emissive.png']
+  ['./resources/textures/car_1.png', './resources/textures/car_1_emissive.png'],
+  ['./resources/textures/car_2.png', './resources/textures/car_2_emissive.png'],
+  ['./resources/textures/car_3.png', './resources/textures/car_2_emissive.png'],
+  ['./resources/textures/bus.png', './resources/textures/bus_emissive.png'],
+  ['./resources/textures/road.png', './resources/textures/default_emissive.png']
 ];
 
 let sceneOBJs: Array<string> = [];
@@ -421,7 +421,7 @@ function loadScene() {
     sceneTextures.push([tex1, tex2]);
   }
 
-  tex0 = new Texture('../resources/textures/wahoo.bmp')
+  tex0 = new Texture('./resources/textures/wahoo.bmp')
 }
 
 function saveImage() {

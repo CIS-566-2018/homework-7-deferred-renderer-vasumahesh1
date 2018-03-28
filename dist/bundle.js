@@ -3764,18 +3764,18 @@ let mesh2;
 let tex0;
 let lights = [];
 let meshes = [
-    '../resources/obj/car_1.obj',
-    '../resources/obj/car_2.obj',
-    '../resources/obj/car_3.obj',
-    '../resources/obj/bus.obj',
-    '../resources/obj/road.obj'
+    './resources/obj/car_1.obj',
+    './resources/obj/car_2.obj',
+    './resources/obj/car_3.obj',
+    './resources/obj/bus.obj',
+    './resources/obj/road.obj'
 ];
 let textures = [
-    ['../resources/textures/car_1.png', '../resources/textures/car_1_emissive.png'],
-    ['../resources/textures/car_2.png', '../resources/textures/car_2_emissive.png'],
-    ['../resources/textures/car_3.png', '../resources/textures/car_2_emissive.png'],
-    ['../resources/textures/bus.png', '../resources/textures/bus_emissive.png'],
-    ['../resources/textures/road.png', '../resources/textures/default_emissive.png']
+    ['./resources/textures/car_1.png', './resources/textures/car_1_emissive.png'],
+    ['./resources/textures/car_2.png', './resources/textures/car_2_emissive.png'],
+    ['./resources/textures/car_3.png', './resources/textures/car_2_emissive.png'],
+    ['./resources/textures/bus.png', './resources/textures/bus_emissive.png'],
+    ['./resources/textures/road.png', './resources/textures/default_emissive.png']
 ];
 let sceneOBJs = [];
 let sceneMeshes = [];
@@ -4021,7 +4021,7 @@ function loadScene() {
         let tex2 = new __WEBPACK_IMPORTED_MODULE_9__rendering_gl_Texture__["a" /* default */](textures[itr][1]);
         sceneTextures.push([tex1, tex2]);
     }
-    tex0 = new __WEBPACK_IMPORTED_MODULE_9__rendering_gl_Texture__["a" /* default */]('../resources/textures/wahoo.bmp');
+    tex0 = new __WEBPACK_IMPORTED_MODULE_9__rendering_gl_Texture__["a" /* default */]('./resources/textures/wahoo.bmp');
 }
 function saveImage() {
     shouldCapture = true;
