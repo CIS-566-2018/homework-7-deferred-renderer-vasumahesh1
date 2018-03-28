@@ -448,7 +448,7 @@ function setShadowMapData(shader: any, shader2: any) {
   let lightDirection =  vec3.fromValues(lightDir[0], lightDir[1], lightDir[2]);
 
   let lightSpaceOrthoProj = mat4.create();
-  mat4.ortho(lightSpaceOrthoProj, -75.0, 75.0, -75.0, 75.0, -100, 1000.0);
+  mat4.ortho(lightSpaceOrthoProj, -20.0, 20.0, -20.0, 20.0, 0.1, 100.0);
 
   let lightSpaceView = mat4.create();
   mat4.lookAt(lightSpaceView, lightDirection, vec3.fromValues(0, 0, 0), vec3.fromValues(0, 1, 0));
@@ -519,7 +519,7 @@ function main() {
   group.add(controls.godray, 'exposure', 0.0, 10.0).step(0.25).name('Exposure').listen();
   
   group = gui.addFolder('Artistic');
-  group.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } );
+  group.add(controls.artistic, 'effect', { 'None': 'none', 'Pencil Sketch': 'sketch' } ).name('Effect');
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
