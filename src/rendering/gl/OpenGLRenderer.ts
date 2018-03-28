@@ -44,6 +44,10 @@ class OpenGLRenderer {
     new Shader(gl.FRAGMENT_SHADER, require('../../shaders/deferred-render.glsl'))
     );
 
+  skyShader :  PostProcess = new PostProcess(
+    new Shader(gl.FRAGMENT_SHADER, require('../../shaders/sky-frag.glsl'))
+    );
+
   // shader that maps 32-bit color to 8-bit color
   tonemapPass : PostProcess = new PostProcess(
     new Shader(gl.FRAGMENT_SHADER, require('../../shaders/tonemap-frag.glsl'))
@@ -341,8 +345,8 @@ class OpenGLRenderer {
   renderFromGBuffer(camera: Camera) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.post32Buffers[0]);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     let view = camera.viewMatrix;

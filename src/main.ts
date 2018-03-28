@@ -19,6 +19,20 @@ import SpotLight from './lights/SpotLight';
 let square: Square;
 let shouldCapture: boolean = false;
 
+const MOONLIGHT_COLOR = [68, 77, 175];
+const WHITE_COLOR = [255, 255, 255];
+let useMoonlight:boolean = true;
+
+function toggleLightColor() {
+  if (useMoonlight) {
+    controls.skyLight.color = WHITE_COLOR;
+  } else {
+    controls.skyLight.color = MOONLIGHT_COLOR;
+  }
+
+  useMoonlight = !useMoonlight;
+}
+
 const SM_VIEWPORT_TRANSFORM:mat4 = mat4.fromValues(
   0.5, 0.0, 0.0, 0.0,
   0.0, 0.5, 0.0, 0.0,
@@ -27,8 +41,9 @@ const SM_VIEWPORT_TRANSFORM:mat4 = mat4.fromValues(
 
 let controls = {
   saveImage: saveImage,
+  toggleLightColor: toggleLightColor,
   skyLight: {
-    color: [26, 29, 64],
+    color: MOONLIGHT_COLOR,
     intensity: 4,
     direction: [15, 15, 15]
   },
@@ -467,6 +482,7 @@ function main() {
   // Add controls to the gui
   const gui = new DAT.GUI();
   gui.add(controls, 'saveImage').name('Save Image');
+  gui.add(controls, 'toggleLightColor').name('Toggle Sky Color');
 
   var group;
 

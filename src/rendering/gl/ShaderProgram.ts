@@ -34,6 +34,7 @@ class ShaderProgram {
   unifProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
   unifTime: WebGLUniformLocation;
+  unifEye: WebGLUniformLocation;
 
   unifTexUnits: Map<string, WebGLUniformLocation>;
 
@@ -56,6 +57,7 @@ class ShaderProgram {
     this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
     this.attrUV = gl.getAttribLocation(this.prog, "vs_UV")
     this.unifModel = gl.getUniformLocation(this.prog, "u_Model");
+    this.unifEye = gl.getUniformLocation(this.prog, "u_Eye");
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifView = gl.getUniformLocation(this.prog, "u_View");
@@ -67,6 +69,13 @@ class ShaderProgram {
     this.unifSMLightViewport = gl.getUniformLocation(this.prog, "u_LightViewportMatrix");
 
     this.unifTexUnits = new Map<string, WebGLUniformLocation>();
+  }
+
+  setEye(vec: vec3) {
+    this.use();
+    if (this.unifEye !== -1) {
+      gl.uniform3fv(this.unifEye, vec);
+    }
   }
 
   setShadowMapMatrices(lightSpace: mat4, lightViewport: mat4) {

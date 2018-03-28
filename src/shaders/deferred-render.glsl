@@ -221,10 +221,21 @@ void main() {
       finalColor = vec4(finalColor.xyz * 0.5, finalColor.a);
   }
 
-	out_Col = finalColor; //vec4(ndc.xy, 0.0, 1.0);
+	out_Col = finalColor;
 
-  // out_Col = vec4(cameraSpacePos, 1.0);
-  // out_Col = vec4(gb1.xyz, 1.0);
-  // out_Col = vec4(cameraSpacePos.xyz, 1.0);
-  // out_Col = cameraSpacePos;
+  float distance = length(worldPos - u_CamPos);
+
+  vec4 currentFog = vec4(0, 0, 0, 1);
+
+  if (distance > 40.0f) {
+    distance = distance - 40.0f;
+    float power = distance * 0.1f;
+
+    // Exponential Fog but start only some units ahead of the player
+    // 1 - exp(-length(wpos - cpos) * c)
+    float fogFactor = 1.0 - exp(-power);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    out_Col = mix(out_Col, currentFog, fogFactor);
+  }
 }
