@@ -45,7 +45,7 @@ let controls = {
     enabled: true
   },
   bloom: {
-    enabled: false,
+    enabled: true,
     blend: 1.0,
     iterations: 1
   },
@@ -74,7 +74,7 @@ let textures: any = [
   ['../resources/textures/car_1.png', '../resources/textures/car_1_emissive.png'],
   ['../resources/textures/car_2.png', '../resources/textures/car_2_emissive.png'],
   ['../resources/textures/car_3.png', '../resources/textures/car_2_emissive.png'],
-  ['../resources/textures/bus.png', '../resources/textures/default_emissive.png'],
+  ['../resources/textures/bus.png', '../resources/textures/bus_emissive.png'],
   ['../resources/textures/road.png', '../resources/textures/default_emissive.png']
 ];
 
@@ -230,6 +230,40 @@ function createLights() {
   targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
 
   targetSpotLight.position = vec3.fromValues(15.1, -0.34, -1.3);
+  // targetSpotLight.position = vec3.fromValues(0, 0, 0);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+  lights.push(targetSpotLight);
+
+  // Bus
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(1.6, -0.34, -2.5);
+  targetSpotLight.range = 10;
+  targetSpotLight.contrib = 2.0;
+
+  targetSpotLight.direction = vec3.fromValues(-1, 0, 0);
+  vec3.normalize(targetSpotLight.direction, targetSpotLight.direction);
+  targetSpotLight.kSpot = 16;
+
+  targetSpotLight.attn = vec3.fromValues(1, 0, 0.25);
+
+  lights.push(targetSpotLight);
+
+  targetSpotLight = new SpotLight();
+  targetSpotLight.ambient = vec4.fromValues(0.07, 0.07, 0.07, 1);
+  targetSpotLight.diffuse = vec4.fromValues(9.6, 8.9, 6.2, 1);
+  targetSpotLight.specular = vec4.fromValues(0, 0, 0, 1);
+
+  targetSpotLight.position = vec3.fromValues(1.6, -0.34, -1.3);
   // targetSpotLight.position = vec3.fromValues(0, 0, 0);
   targetSpotLight.range = 10;
   targetSpotLight.contrib = 2.0;
@@ -480,7 +514,7 @@ function main() {
 
     // standardDeferred.bindTexToUnit("tex_Color", tex0, 0);
 
-    testUV(camera);
+    // testUV(camera);
 
     let lightDirection = controls.skyLight.direction;
     let skyColor = controls.skyLight.color;

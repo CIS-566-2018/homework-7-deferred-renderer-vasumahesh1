@@ -32,7 +32,7 @@ class OpenGLRenderer {
   post32Passes: PostProcess[];
 
   downSampleGodRay: number = 1.0;
-  downSampleBloom: number = 2.0;
+  downSampleBloom: number = 1.0;
 
   currentTime: number; // timer number to apply to all drawing shaders
 
